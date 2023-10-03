@@ -2,7 +2,7 @@
 
 Keras Implementation of Video Swin Transformers. The official implementation is [here](https://github.com/SwinTransformer/Video-Swin-Transformer) in PyTorch based on [mmaction2](https://github.com/open-mmlab/mmaction2).
 
-![](assets\teaser.png)
+![](./assets/teaser.png)
 
 ## Results and Models
 
