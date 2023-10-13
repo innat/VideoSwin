@@ -56,7 +56,6 @@ class TFSwinTransformer3D(keras.Model):
         norm_layer=layers.LayerNormalization,
         patch_norm=False,
         frozen_stages=-1,
-        in_channels=768,
         num_classes=400,
         **kwargs
     ):  
@@ -146,13 +145,15 @@ class TFSwinTransformer3D(keras.Model):
         )
     
 
-def tf_video_swin_tiny(**kwargs):
+
+def VideoSwinT(num_classes, window_size=(8,7,7), **kwargs):
     model = TFSwinTransformer3D(
+        num_classes=num_classes,
         patch_size=(2,4,4),
         embed_dim=96,
         depths=[2, 2, 6, 2],
         num_heads=[3, 6, 12, 24],
-        window_size=(8,7,7),
+        window_size=window_size,
         mlp_ratio=4.,
         qkv_bias=True,
         qk_scale=None,
@@ -166,14 +167,14 @@ def tf_video_swin_tiny(**kwargs):
     )
     return model
 
-
-def tf_video_swin_small(**kwargs): 
+def VideoSwinS(num_classes, window_size=(8,7,7), **kwargs):
     model = TFSwinTransformer3D(
+        num_classes=num_classes,
         patch_size=(2,4,4),
         embed_dim=96,
         depths=[2, 2, 18, 2],
         num_heads=[3, 6, 12, 24],
-        window_size=(8,7,7),
+        window_size=window_size,
         mlp_ratio=4.,
         qkv_bias=True,
         qk_scale=None,
@@ -187,14 +188,14 @@ def tf_video_swin_small(**kwargs):
     )
     return model
 
-
-def tf_video_swin_base(**kwargs):
+def VideoSwinB(num_classes, window_size=(8,7,7), **kwargs):
     model = TFSwinTransformer3D(
+        num_classes=num_classes,
         patch_size=(2,4,4),
         embed_dim=128,
         depths=[2, 2, 18, 2],
         num_heads=[4, 8, 16, 32],
-        window_size=(8,7,7), # # K400/K600:8,7,7 SSV2: 16,7,7
+        window_size=window_size, # # K400/K600:8,7,7 SSV2: 16,7,7
         mlp_ratio=4.,
         qkv_bias=True,
         qk_scale=None,
@@ -209,19 +210,3 @@ def tf_video_swin_base(**kwargs):
     return model
 
 
-mode = 'T' # S, T, B
-data = 'K400' # K400, K600, SSV2
-ext_data = 'IN1K' # 'IN1K', 'IN22K', 'K400'
-num_classes = 400 # 400, 600, 174
-num_frames = 32
-checkpoint_name = f'TFVideoSwin{mode}_{data}_{ext_data}_P244_W877_{num_frames}x224'
-
-tf_funcs: dict = {
-    'T' : partial(tf_video_swin_tiny,  num_classes=num_classes, name=checkpoint_name),
-    'S' : partial(tf_video_swin_small, num_classes=num_classes, name=checkpoint_name),
-    'B' : partial(tf_video_swin_base,  num_classes=num_classes, name=checkpoint_name),
-}
-
-model_type = tf_funcs.get(mode, 'INVALID')
-model_tf = model_type()
-y_pred = model_tf(tf.ones(shape=(1, num_frames, 224, 224, 3)))

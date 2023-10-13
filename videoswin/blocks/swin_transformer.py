@@ -7,9 +7,9 @@ from layers import TFMlp
 from layers import TFWindowAttention3D
 from layers import TFDropPath
 
-from videoswin.utils import get_window_size
-from videoswin.utils import tf_window_partition
-from videoswin.utils import tf_window_reverse
+from ..utils import get_window_size
+from ..utils import tf_window_partition
+from ..utils import tf_window_reverse
 
 class TFSwinTransformerBlock3D(keras.Model):
     """ Swin Transformer Block.

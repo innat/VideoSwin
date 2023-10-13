@@ -5,9 +5,9 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
-import TFSwinTransformerBlock3D
-from videoswin.utils import get_window_size
-from videoswin.utils import tf_compute_mask
+from .basic import TFSwinTransformerBlock3D
+from ..utils import get_window_size
+from ..utils import tf_compute_mask
 
 class TFBasicLayer(keras.Model):
     """ A basic Swin Transformer layer for one stage.
