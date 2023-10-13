@@ -5,7 +5,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
-from .basic import TFSwinTransformerBlock3D
+from .swin_transformer import TFSwinTransformerBlock3D
 from ..utils import get_window_size
 from ..utils import tf_compute_mask
 

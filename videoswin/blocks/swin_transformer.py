@@ -3,10 +3,9 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
-from layers import TFMlp
-from layers import TFWindowAttention3D
-from layers import TFDropPath
-
+from ..layers import TFMlp
+from ..layers import TFWindowAttention3D
+from ..layers import TFDropPath
 from ..utils import get_window_size
 from ..utils import tf_window_partition
 from ..utils import tf_window_reverse

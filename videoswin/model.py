@@ -9,10 +9,10 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
-from layers import TFPatchEmbed3D
-from layers import TFPatchMerging
-from layers import TFAdaptiveAveragePooling3D
-from blocks import TFBasicLayer
+from videoswin.layers import TFPatchEmbed3D
+from videoswin.layers import TFPatchMerging
+from videoswin.layers import TFAdaptiveAveragePooling3D
+from videoswin.blocks import TFBasicLayer
 
 
 class TFSwinTransformer3D(keras.Model):
@@ -162,7 +162,6 @@ def VideoSwinT(num_classes, window_size=(8,7,7), drop_path_rate=0.2, **kwargs):
         drop_path_rate=drop_path_rate,
         norm_layer=partial(layers.LayerNormalization, epsilon=1e-05),
         patch_norm=True,
-        in_channels=768,
         **kwargs
     )
     return model
@@ -183,7 +182,6 @@ def VideoSwinS(num_classes, window_size=(8,7,7), drop_path_rate=0.2, **kwargs):
         drop_path_rate=drop_path_rate,
         norm_layer=partial(layers.LayerNormalization, epsilon=1e-05),
         patch_norm=True,
-        in_channels=768,
         **kwargs
     )
     return model
@@ -204,7 +202,6 @@ def VideoSwinB(num_classes, window_size=(8,7,7), drop_path_rate=0.2, **kwargs):
         drop_path_rate=drop_path_rate,
         norm_layer=partial(layers.LayerNormalization, epsilon=1e-05),
         patch_norm=True,
-        in_channels=1024,
         **kwargs
     )
     return model

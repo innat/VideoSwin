@@ -5,35 +5,23 @@ Keras Implementation of Video Swin Transformers. The official implementation is 
 ![](./assets/teaser.png)
 
 ```python
-def tf_video_swin_tiny(**kwargs):
-    model = TFSwinTransformer3D(
-        patch_size=(2,4,4),
-        embed_dim=96,
-        depths=[2, 2, 6, 2],
-        num_heads=[3, 6, 12, 24],
-        window_size=(8,7,7),
-        mlp_ratio=4.,
-        qkv_bias=True,
-        qk_scale=None,
-        drop_rate=0.,
-        attn_drop_rate=0.,
-        drop_path_rate=0.2,
-        norm_layer=partial(
-            layers.LayerNormalization, epsilon=1e-05
-        ),
-        patch_norm=True,
-        in_channels=768,
-        **kwargs
-    )
-    return model
+from videomae import VideoSwinT
 
-
-model = tf_video_swin_tiny(num_classes=400)
-model_tf.load_weights('TFVideoSwinT_K400_IN1K_P244_W877_32x224.h5')
-
-y_pred = model_tf(tf.ones(shape=(1, 32, 224, 224, 3)))
-y_pred.shape
+>>> model = VideoSwinT(num_classes=400)
+>>> container = read_video('sample.mp4')
+>>> frames = frame_sampling(container, num_frames=32)
+>>> y = model(frames)
+>>> y.shape
 TensorShape([1, 400])
+
+>>> probabilities = tf.nn.softmax(y_pred_tf)
+>>> probabilities = probabilities.numpy().squeeze(0)
+>>> confidences = {
+    label_map_inv[i]: float(probabilities[i]) \
+    for i in np.argsort(probabilities)[::-1]
+}
+>>> confidences
+
 ```
 
 ## Results and Models
