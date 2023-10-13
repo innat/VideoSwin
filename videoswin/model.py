@@ -146,7 +146,7 @@ class TFSwinTransformer3D(keras.Model):
     
 
 
-def VideoSwinT(num_classes, window_size=(8,7,7), **kwargs):
+def VideoSwinT(num_classes, window_size=(8,7,7), drop_path_rate=0.2, **kwargs):
     model = TFSwinTransformer3D(
         num_classes=num_classes,
         patch_size=(2,4,4),
@@ -159,7 +159,7 @@ def VideoSwinT(num_classes, window_size=(8,7,7), **kwargs):
         qk_scale=None,
         drop_rate=0.,
         attn_drop_rate=0.,
-        drop_path_rate=0.2,
+        drop_path_rate=drop_path_rate,
         norm_layer=partial(layers.LayerNormalization, epsilon=1e-05),
         patch_norm=True,
         in_channels=768,
@@ -167,7 +167,7 @@ def VideoSwinT(num_classes, window_size=(8,7,7), **kwargs):
     )
     return model
 
-def VideoSwinS(num_classes, window_size=(8,7,7), **kwargs):
+def VideoSwinS(num_classes, window_size=(8,7,7), drop_path_rate=0.2, **kwargs):
     model = TFSwinTransformer3D(
         num_classes=num_classes,
         patch_size=(2,4,4),
@@ -180,7 +180,7 @@ def VideoSwinS(num_classes, window_size=(8,7,7), **kwargs):
         qk_scale=None,
         drop_rate=0.,
         attn_drop_rate=0.,
-        drop_path_rate=0.2,
+        drop_path_rate=drop_path_rate,
         norm_layer=partial(layers.LayerNormalization, epsilon=1e-05),
         patch_norm=True,
         in_channels=768,
@@ -188,20 +188,20 @@ def VideoSwinS(num_classes, window_size=(8,7,7), **kwargs):
     )
     return model
 
-def VideoSwinB(num_classes, window_size=(8,7,7), **kwargs):
+def VideoSwinB(num_classes, window_size=(8,7,7), drop_path_rate=0.2, **kwargs):
     model = TFSwinTransformer3D(
         num_classes=num_classes,
         patch_size=(2,4,4),
         embed_dim=128,
         depths=[2, 2, 18, 2],
         num_heads=[4, 8, 16, 32],
-        window_size=window_size, # # K400/K600:8,7,7 SSV2: 16,7,7
+        window_size=window_size,
         mlp_ratio=4.,
         qkv_bias=True,
         qk_scale=None,
         drop_rate=0.,
         attn_drop_rate=0.,
-        drop_path_rate=0.2,
+        drop_path_rate=drop_path_rate,
         norm_layer=partial(layers.LayerNormalization, epsilon=1e-05),
         patch_norm=True,
         in_channels=1024,
