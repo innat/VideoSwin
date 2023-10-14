@@ -70,3 +70,21 @@ In the training phase, the video swin mdoels are initialized with the pretrained
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | 
 |  Swin-B  | Kinetics 400 |  69.6  |  92.7  |   89M   |  ?  |  [swin-b](https://github.com/SwinTransformer/Video-Swin-Transformer/blob/master/configs/recognition/swin/swin_base_patch244_window1677_sthv2.py)  |
 
+
+# TODO
+- [x] Custom fine-tuning code.
+- [] Publish on TF-Hub.
+- [] Support `Keras V3` to support multi-framework backend.
+
+##  Citation
+
+If you use this videoswin implementation in your research, please cite it using the metadata from our `CITATION.cff` file.
+
+```swift
+@article{liu2021video,
+  title={Video Swin Transformer},
+  author={Liu, Ze and Ning, Jia and Cao, Yue and Wei, Yixuan and Zhang, Zheng and Lin, Stephen and Hu, Han},
+  journal={arXiv preprint arXiv:2106.13230},
+  year={2021}
+}
+```

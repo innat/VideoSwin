@@ -1,0 +1,22 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: videoswin-keras
+message: >-
+  If you use this implementation, please cite it using the  
+  metadata from this file
+type: software
+authors:
+  - given-names: Mohammed
+    family-names: Innat
+    email: innat.dev@gmail.com
+identifiers:
+  - type: url
+    value: 'https://github.com/innat/VideoSwin'
+    description: Keras reimplementation of VideoSwin
+keywords:
+  - software
+license: MIT
+version: 1.0.0
+date-released: '2023-10-19'
