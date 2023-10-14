@@ -34,7 +34,7 @@ The **VideoSwin** checkpoints are available in both `SavedModel` and `H5` format
 **Inference**
 
 ```python
-from videomae import VideoSwinT
+from videoswin import VideoSwinT
 
 >>> model = VideoSwinT(num_classes=400)
 >>> model.load_weights('TFVideoSwinT_K400_IN1K_P244_W877_32x224.h5')
