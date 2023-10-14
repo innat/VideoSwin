@@ -3,6 +3,8 @@
 
 ### Kinetics 400
 
+In the training phase, the video swin mdoels are initialized with the pretrained weights of image swin models. In that case, `IN` referes to **ImageNet**.
+
 | Backbone |  Pretrain  | #Frame | Top-1 | Top-5 | Checkpoints |
 | :---: | :---: | :---: | :---: | :---: | :---: | 
 |  Swin-T  | IN-1K  | 32x4x3 | 78.8  |  93.6  |   [SavedModel]()/[h5]()  | 

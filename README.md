@@ -6,7 +6,9 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2106.13230-darkred)](https://arxiv.org/abs/2106.13230) [![keras-2.12.](https://img.shields.io/badge/keras-2.12-darkred)]([?](https://img.shields.io/badge/keras-2.12-darkred)) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](?) [![HugginFace badge](https://img.shields.io/badge/🤗%20Hugging%20Face-Spaces-yellow.svg)](?) [![HugginFace badge](https://img.shields.io/badge/🤗%20Hugging%20Face-Hub-yellow.svg)](?)
 
 
-Keras implementation of Video Swin transformers. The official implementation is [here](https://github.com/SwinTransformer/Video-Swin-Transformer) in PyTorch based on [mmaction2](https://github.com/open-mmlab/mmaction2).
+VideoSwin is a pure transformer based video modeling algorithm, attained top accuracy on the major video recognition benchmarks. In this model, the author advocates an inductive bias of locality in video transformers, which leads to a better speed-accuracy trade-off compared to previous approaches which compute self-attention globally even with spatial-temporal factorization. The locality of the proposed video architecture is realized by adapting the [**Swin Transformer**](https://arxiv.org/abs/2103.14030) designed for the image domain, while continuing to leverage the power of pre-trained image models.
+
+This is a unofficial `Keras` implementation of [Video Swin transformers](https://arxiv.org/abs/2106.13230). The official `PyTorch` implementation is [here](https://github.com/SwinTransformer/Video-Swin-Transformer) based on [mmaction2](https://github.com/open-mmlab/mmaction2).
 
 ## News
 
@@ -21,6 +23,10 @@ pip install -e .
 ```
 
 # Usage
+
+The **VideoSwin** checkpoints are available in both `SavedModel` and `H5` formats. The variants of this models are `tiny`, `small`, and `base`. Check this [release](https://github.com/innat/VideoSwin/releases/tag/v1.0) and [model zoo](https://github.com/innat/VideoSwin/blob/main/MODEL_ZOO.md) page to know details of it. Following are some hightlights.
+
+**Inference**
 
 ```python
 from videomae import VideoSwinT
@@ -43,7 +49,30 @@ TensorShape([1, 400])
 
 ```
 
-## Results and Models
+**Fine Tune**
+
+Each videoswin checkpoints returns `logits`. We can just add a custom classifier on top of it. For example:
+
+```python
+# import pretrained model, i.e.
+video_swin = keras.models.load_model(
+    'TFVideoSwinB_SSV2_K400_P244_W1677_32x224', compile=False
+    )
+video_swin.trainable = False
+
+# downstream model
+model = keras.Sequential([
+    video_swin,
+    layers.Dense(
+        len(class_folders), dtype='float32', activation=None
+    )
+])
+model.compile(...)
+model.fit(...)
+model.predict(...)
+```
+
+## Model Zoo
 
 The 3D swin-video checkpoints are listed in [`MODEL_ZOO.md`](MODEL_ZOO.md). Following are some hightlights.
 
