@@ -77,7 +77,7 @@ model.fit(...)
 model.predict(...)
 ```
 
-**Attention Mpas**
+**Attention Maps**
 
 By passing `return_attns=True` in the forward pass, we can get the attention scores from each basic block of the model as well. For example,
 
