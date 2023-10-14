@@ -13,10 +13,10 @@ This is a unofficial `Keras` implementation of [Video Swin transformers](https:/
 ## News
 
 - **[14-10-2023]**: VideoSwin integrated into [Huggingface Space]().
-- **[12-10-2023]**: GPU(s), TPU-VM for fine-tune training are supported, [colab]().
+- **[12-10-2023]**: GPU(s), TPU-VM for fine-tune training are supported, [colab](https://github.com/innat/VideoSwin/blob/main/notebooks/videoswin_video_classification.ipynb).
 - **[09-10-2023]**: TensorFlow [SavedModel](https://www.tensorflow.org/guide/saved_model) (formet) checkpoints, [link](https://github.com/innat/VideoSwin/releases/tag/v1.1).
-- **[08-10-2023]**: VideoSwin checkpoints SSV2 and Kinetics-600 becomes available, [link](https://github.com/innat/VideoSwin/releases/tag/v1.0).
-- **[07-10-2023]**: VideoSwin checkpoints on Kinetics-400 becomes available, [link](https://github.com/innat/VideoSwin/releases/tag/v1.0).
+- **[08-10-2023]**: VideoSwin checkpoints [SSV2](https://developer.qualcomm.com/software/ai-datasets/something-something) and [Kinetics-600](https://www.deepmind.com/open-source/kinetics) becomes available, [link](https://github.com/innat/VideoSwin/releases/tag/v1.0).
+- **[07-10-2023]**: VideoSwin checkpoints on [Kinetics-400](https://www.deepmind.com/open-source/kinetics) becomes available, [link](https://github.com/innat/VideoSwin/releases/tag/v1.0).
 - **[06-10-2023]**: Code of VideoSwin in Keras becomes available.
 
 # Install 
