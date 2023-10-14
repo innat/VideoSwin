@@ -77,6 +77,28 @@ model.fit(...)
 model.predict(...)
 ```
 
+**Attention Mpas**
+
+By passing `return_attns=True` in the forward pass, we can get the attention scores from each basic block of the model as well. For example,
+
+```python
+from videomae import VideoSwinT
+
+>>> model = VideoSwinT(num_classes=400)
+>>> model.load_weights('TFVideoSwinT_K400_IN1K_P244_W877_32x224.h5')
+>>> container = read_video('sample.mp4')
+>>> frames = frame_sampling(container, num_frames=32)
+>>> y, attns_scores = model(frames, return_attns=True)
+
+for k, v in attns_scores.items():
+    print(k, v.shape) # num_heads, depth, seq_len, seq_len
+TFBasicLayer1_att (128, 3, 392, 392)
+TFBasicLayer2_att (32, 6, 392, 392)
+TFBasicLayer3_att (8, 12, 392, 392)
+TFBasicLayer4_att (2, 24, 392, 392)
+```
+
+
 ## Model Zoo
 
 The 3D swin-video checkpoints are listed in [`MODEL_ZOO.md`](MODEL_ZOO.md). Following are some hightlights.
