@@ -53,7 +53,7 @@ TensorShape([1, 400])
 }
 >>> confidences
 ```
-A classification results on a sample from [Kinetics-400]().
+A classification results on a sample from [Kinetics-400](https://www.deepmind.com/open-source/kinetics).
 
 | Video | Top-5 |
 |:---:|:---|
