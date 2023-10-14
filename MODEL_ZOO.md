@@ -7,22 +7,22 @@ In the training phase, the video swin mdoels are initialized with the pretrained
 
 | Backbone |  Pretrain  | #Frame | Top-1 | Top-5 | Checkpoints |
 | :---: | :---: | :---: | :---: | :---: | :---: | 
-|  Swin-T  | IN-1K  | 32x4x3 | 78.8  |  93.6  |   [SavedModel]()/[h5]()  | 
-|  Swin-S  | IN-1K  | 32x4x3 | 80.6  |  94.5  |   [SavedModel]()/[h5]()  |
-|  Swin-B  | IN-1K  | 32x4x3 | 80.6  |  94.6  |   [SavedModel]()/[h5]()  | 
-|  Swin-B  | IN-22K | 32x4x3 | 82.7  |  95.5  |   [SavedModel]()/[h5]()   | 
+|  Swin-T  | IN-1K  | 32x4x3 | 78.8  |  93.6  |   [SavedModel](https://github.com/innat/VideoSwin/releases/download/v1.1/TFVideoSwinT_K400_IN1K_P244_W877_32x224.zip)/[h5](https://github.com/innat/VideoSwin/releases/download/v1.0/TFVideoSwinT_K400_IN1K_P244_W877_32x224.h5)  | 
+|  Swin-S  | IN-1K  | 32x4x3 | 80.6  |  94.5  |   [SavedModel](https://github.com/innat/VideoSwin/releases/download/v1.1/TFVideoSwinS_K400_IN1K_P244_W877_32x224.zip)/[h5](https://github.com/innat/VideoSwin/releases/download/v1.0/TFVideoSwinS_K400_IN1K_P244_W877_32x224.h5)  |
+|  Swin-B  | IN-1K  | 32x4x3 | 80.6  |  94.6  |   [SavedModel](https://github.com/innat/VideoSwin/releases/download/v1.1/TFVideoSwinB_K400_IN1K_P244_W877_32x224.zip)/[h5](https://github.com/innat/VideoSwin/releases/download/v1.0/TFVideoSwinB_K400_IN1K_P244_W877_32x224.h5)  | 
+|  Swin-B  | IN-22K | 32x4x3 | 82.7  |  95.5  |   [SavedModel](https://github.com/innat/VideoSwin/releases/download/v1.1/TFVideoSwinB_K400_IN22K_P244_W877_32x224.zip)/[h5](https://github.com/innat/VideoSwin/releases/download/v1.0/TFVideoSwinB_K400_IN22K_P244_W877_32x224.h5)   | 
 
 ### Kinetics 600
 
 | Backbone |  Pretrain  | #Frame | Top-1 | Top-5 | Checkpoints |
 | :---: | :---: | :---: | :---: | :---: | :---: | 
-|  Swin-B  | IN-22K | 32x4x3 | 84.0  |  96.5  |   [SavedModel]()/[h5]()  | 
+|  Swin-B  | IN-22K | 32x4x3 | 84.0  |  96.5  |   [SavedModel](https://github.com/innat/VideoSwin/releases/download/v1.1/TFVideoSwinB_K600_IN22K_P244_W877_32x224.zip)/[h5](https://github.com/innat/VideoSwin/releases/download/v1.0/TFVideoSwinB_K600_IN22K_P244_W877_32x224.h5)  | 
 
 ### Something-Something V2
 
 | Backbone |  Pretrain  | #Frame | Top-1 | Top-5 | Checkpoints |
 | :---: | :---: | :---: | :---: | :---: | :---: | 
-|  Swin-B  | Kinetics 400 | 32x1x3 | 69.6  |  92.7  |  [SavedModel]()/[h5]()  | 
+|  Swin-B  | Kinetics 400 | 32x1x3 | 69.6  |  92.7  |  [SavedModel]()/[h5](https://github.com/innat/VideoSwin/releases/download/v1.0/TFVideoSwinB_SSV2_K400_P244_W1677_32x224.h5)  | 
 
 
 ## Note
