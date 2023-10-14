@@ -22,7 +22,7 @@ In the training phase, the video swin mdoels are initialized with the pretrained
 
 | Backbone |  Pretrain  | #Frame | Top-1 | Top-5 | Checkpoints |
 | :---: | :---: | :---: | :---: | :---: | :---: | 
-|  Swin-B  | Kinetics 400 | 32x1x3 | 69.6  |  92.7  |  [SavedModel]()/[h5](https://github.com/innat/VideoSwin/releases/download/v1.0/TFVideoSwinB_SSV2_K400_P244_W1677_32x224.h5)  | 
+|  Swin-B  | Kinetics 400 | 32x1x3 | 69.6  |  92.7  |  [SavedModel](https://github.com/innat/VideoSwin/releases/download/v1.1/TFVideoSwinB_SSV2_K400_P244_W1677_32x224.zip)/[h5](https://github.com/innat/VideoSwin/releases/download/v1.0/TFVideoSwinB_SSV2_K400_P244_W1677_32x224.h5)  | 
 
 
 ## Note
