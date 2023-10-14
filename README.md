@@ -51,8 +51,23 @@ TensorShape([1, 400])
     for i in np.argsort(probabilities)[::-1]
 }
 >>> confidences
-
 ```
+A classification results on a sample from [Kinetics-400]().
+
+```yml
+{
+    'playing_cello': 0.9941741824150085,
+    'playing_violin': 0.0016851733671501279,
+    'playing_recorder': 0.0011555481469258666,
+    'playing_clarinet': 0.0009695519111119211,
+    'playing_harp': 0.0007713600643910468,
+}
+```
+
+| Video | Top-5 |
+|:---:|:---|
+| ![](./assets/view1.gif) | <pre>{<br>    'playing_cello': 0.9941741824150085,<br>    'playing_violin': 0.0016851733671501279,<br>    'playing_recorder': 0.0011555481469258666,<br>    'playing_clarinet': 0.0009695519111119211,<br>    'playing_harp': 0.0007713600643910468<br>}</pre> |
+
 
 **Fine Tune**
 
