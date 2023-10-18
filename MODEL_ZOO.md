@@ -30,4 +30,31 @@ In the training phase, the video swin mdoels are initialized with the pretrained
 - `#Frame = #input_frame x #clip x #crop`. The frame interval is `2` to evaluate on benchmark dataset. 
 - `#input_frame` means how many frames are input for model during the test phase.
 - `#crop` means spatial crops (e.g., 3 for left/right/center crop).
-- `#clip` means temporal clips (e.g., 5 means repeted temporal sampling five clips with different start indices).#
+- `#clip` means temporal clips (e.g., 5 means repeted temporal sampling five clips with different start indices).
+
+## Weight Comparison
+
+The `torch` videoswin model can be loaded from the official [repo](https://github.com/SwinTransformer/Video-Swin-Transformer). Following are some quick test of both implementation showing logit matching.
+
+```python
+input = np.random.rand(4, 32, 224, 224, 3).astype('float32')
+inputs = torch.tensor(input)
+inputs = torch.einsum('nthwc->ncthw', inputs)
+# inputs.shape: torch.Size([4, 3, 32, 224, 224])
+
+# torch model
+model_pt.eval()
+x = model_torch(inputs.float())
+x = x.detach().numpy()
+x.shape # (4, 174) (Sth-Sth dataset)
+
+# keras model
+y = model_keras(input, training=False)
+y = y.numpy()
+y.shape # (4, 174) (Sth-Sth dataset)
+
+np.testing.assert_allclose(x, y, 1e-4, 1e-4)
+np.testing.assert_allclose(x, y, 1e-5, 1e-5)
+# OK
+```
+
