@@ -13,6 +13,7 @@ This is a unofficial `Keras` implementation of [Video Swin transformers](https:/
 
 ## News
 
+- **[24-10-2023]**: [Kinetics-400](https://www.deepmind.com/open-source/kinetics) test data set can be found on kaggle, [link](https://www.kaggle.com/datasets/ipythonx/k4testset/data?select=videos_val).
 - **[14-10-2023]**: VideoSwin integrated into [Huggingface Space](https://huggingface.co/spaces/innat/VideoSwin).
 - **[12-10-2023]**: GPU(s), TPU-VM for fine-tune training are supported, [colab](https://github.com/innat/VideoSwin/blob/main/notebooks/videoswin_video_classification.ipynb).
 - **[09-10-2023]**: TensorFlow [SavedModel](https://www.tensorflow.org/guide/saved_model) (formet) checkpoints, [link](https://github.com/innat/VideoSwin/releases/tag/v1.1).
