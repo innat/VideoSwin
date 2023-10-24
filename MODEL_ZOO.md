@@ -1,6 +1,13 @@
 
 # VideoSwin Model Zoo
 
+## Note
+
+- `#Frame = #input_frame x #clip x #crop`. The frame interval is `2` to evaluate on benchmark dataset. 
+- `#input_frame` means how many frames are input for model during the test phase.
+- `#crop` means spatial crops (e.g., 3 for left/right/center crop).
+- `#clip` means temporal clips (e.g., 5 means repeted temporal sampling five clips with different start indices).
+
 ### Kinetics 400
 
 In the training phase, the video swin mdoels are initialized with the pretrained weights of image swin models. In that case, `IN` referes to **ImageNet**.
@@ -24,13 +31,6 @@ In the training phase, the video swin mdoels are initialized with the pretrained
 | :---: | :---: | :---: | :---: | :---: | :---: | 
 |  Swin-B  | Kinetics 400 | 32x1x3 | 69.6  |  92.7  |  [SavedModel](https://github.com/innat/VideoSwin/releases/download/v1.1/TFVideoSwinB_SSV2_K400_P244_W1677_32x224.zip)/[h5](https://github.com/innat/VideoSwin/releases/download/v1.0/TFVideoSwinB_SSV2_K400_P244_W1677_32x224.h5)  | 
 
-
-## Note
-
-- `#Frame = #input_frame x #clip x #crop`. The frame interval is `2` to evaluate on benchmark dataset. 
-- `#input_frame` means how many frames are input for model during the test phase.
-- `#crop` means spatial crops (e.g., 3 for left/right/center crop).
-- `#clip` means temporal clips (e.g., 5 means repeted temporal sampling five clips with different start indices).
 
 ## Weight Comparison
 
