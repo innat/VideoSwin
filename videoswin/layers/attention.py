@@ -47,12 +47,12 @@ class WindowAttention3D(keras.Model):
         coords = ops.stack([z_z, y_y, x_x], axis=0)
         coords_flatten = ops.reshape(coords, [3, -1])
         relative_coords = coords_flatten[:, :, None] - coords_flatten[:, None, :]
-        relative_coords = ops.transpose(relative_coords, perm=[1, 2, 0])
+        relative_coords = ops.transpose(relative_coords, [1, 2, 0])
         z_z = (relative_coords[:, :, 0] + window_depth  - 1) * (2 * window_height - 1) * (2 * window_width - 1)
         x_x = (relative_coords[:, :, 1] + window_height - 1) * (2 * window_width - 1)
         y_y = (relative_coords[:, :, 2] + window_width  - 1)
         relative_coords = ops.stack([z_z, x_x, y_y], axis=-1)
-        return ops.reduce_sum(relative_coords, axis=-1)
+        return ops.sum(relative_coords, axis=-1)
 
     def build(self, input_shape):
         self.relative_position_bias_table = self.add_weight(
@@ -82,7 +82,7 @@ class WindowAttention3D(keras.Model):
         
         qkv = self.qkv(x)
         qkv = ops.reshape(qkv, [B_, N, 3, self.num_heads, C // self.num_heads])
-        qkv = ops.transpose(qkv, perm=[2, 0, 3, 1, 4])
+        qkv = ops.transpose(qkv, [2, 0, 3, 1, 4])
         q, k, v = ops.split(qkv, 3, axis=0)
 
         q = ops.squeeze(q, axis=0) * self.scale
@@ -94,7 +94,7 @@ class WindowAttention3D(keras.Model):
             self.relative_position_bias_table, self.relative_position_index[:N, :N]
         )
         relative_position_bias = ops.reshape(relative_position_bias, [N, N, -1])
-        relative_position_bias = ops.transpose(relative_position_bias, perm=[2, 0, 1])
+        relative_position_bias = ops.transpose(relative_position_bias, [2, 0, 1])
         attn = attn + relative_position_bias[None, ...]
   
         if mask is not None:
@@ -107,7 +107,7 @@ class WindowAttention3D(keras.Model):
         attn = self.attn_drop(attn, training=training)
 
         x = ops.matmul(attn, v)
-        x = ops.transpose(x, perm=[0, 2, 1, 3])
+        x = ops.transpose(x, [0, 2, 1, 3])
         x = ops.reshape(x, [B_, N, C])
         x = self.proj(x)
         x = self.proj_drop(x, training=training)

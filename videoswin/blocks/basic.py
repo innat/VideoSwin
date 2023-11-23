@@ -8,7 +8,7 @@ from keras import ops
 
 from .swin_transformer import SwinTransformerBlock3D
 from ..utils import get_window_size
-from ..utils import tf_compute_mask
+from ..utils import compute_mask
 
 class BasicLayer(keras.Model):
     """ A basic Swin Transformer layer for one stage.
@@ -87,7 +87,7 @@ class BasicLayer(keras.Model):
         Dp = self.compute_dim_padded(input_shape[1], window_size[0])
         Hp = self.compute_dim_padded(input_shape[2], window_size[1])
         Wp = self.compute_dim_padded(input_shape[3], window_size[2])
-        self.attn_mask = tf_compute_mask(
+        self.attn_mask = compute_mask(
             Dp, Hp, Wp, window_size, shift_size
         )
         super().build(input_shape)
