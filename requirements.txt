@@ -1,2 +1,2 @@
-tensorflow>=2.12
+keras-nightly
 opencv-python>=4.1.2
