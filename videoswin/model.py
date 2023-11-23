@@ -5,17 +5,17 @@ from functools import partial
 warnings.simplefilter(action="ignore")
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
+import keras
+from keras import layers
+from keras import ops
 
-from videoswin.layers import TFPatchEmbed3D
-from videoswin.layers import TFPatchMerging
-from videoswin.layers import TFAdaptiveAveragePooling3D
-from videoswin.blocks import TFBasicLayer
+from videoswin.layers import PatchEmbed3D
+from videoswin.layers import PatchMerging
+from videoswin.layers import AdaptiveAveragePooling3D
+from videoswin.blocks import BasicLayer
 
 
-class TFSwinTransformer3D(keras.Model):
+class SwinTransformer3D(keras.Model):
     """ Swin Transformer backbone.
         A Keras impl of : `Swin Transformer: Hierarchical Vision Transformer using Shifted Windows`  -
           https://arxiv.org/pdf/2103.14030
@@ -69,22 +69,22 @@ class TFSwinTransformer3D(keras.Model):
         self.mlp_ratio = mlp_ratio
 
         # split image into non-overlapping patches
-        self.patch_embed = TFPatchEmbed3D(
+        self.patch_embed = PatchEmbed3D(
             patch_size=patch_size, 
             in_chans=in_chans, 
             embed_dim=embed_dim,
             norm_layer=norm_layer if self.patch_norm else None,
-            name='TFPatchEmbed3D'
+            name='PatchEmbed3D'
         )
         self.pos_drop = layers.Dropout(drop_rate, name='pos_drop')
 
         # stochastic depth
-        dpr = tf.linspace(0., drop_path_rate, sum(depths)).numpy().tolist() 
+        dpr = ops.linspace(0., drop_path_rate, sum(depths)).numpy().tolist() 
 
         # build layers
         self.basic_layers = []
         for i_layer in range(self.num_layers):
-            layer = TFBasicLayer(
+            layer = BasicLayer(
                 dim= int(embed_dim * 2 ** i_layer),
                 depth=depths[i_layer],
                 num_heads=num_heads[i_layer],
@@ -96,13 +96,13 @@ class TFSwinTransformer3D(keras.Model):
                 attn_drop=attn_drop_rate,
                 drop_path=dpr[sum(depths[:i_layer]):sum(depths[:i_layer + 1])],
                 norm_layer=norm_layer,
-                downsample=TFPatchMerging if ( i_layer < self.num_layers - 1) else None,
-                name=f'TFBasicLayer{i_layer+1}'
+                downsample=PatchMerging if ( i_layer < self.num_layers - 1) else None,
+                name=f'BasicLayer{i_layer+1}'
             )
             self.basic_layers.append(layer)
         
         self.norm = norm_layer(axis=-1, epsilon=1e-05, name='norm')
-        self.avg_pool3d = TFAdaptiveAveragePooling3D((1, 1, 1), name='adt_avg_pool3d')
+        self.avg_pool3d = AdaptiveAveragePooling3D((1, 1, 1), name='adt_avg_pool3d')
         self.head = layers.Dense(num_classes, use_bias=True, name='head', dtype='float32')
 
     def call(self, x, return_attns=False, training=None):
@@ -147,7 +147,7 @@ class TFSwinTransformer3D(keras.Model):
 
 
 def VideoSwinT(num_classes, window_size=(8,7,7), drop_path_rate=0.2, **kwargs):
-    model = TFSwinTransformer3D(
+    model = SwinTransformer3D(
         num_classes=num_classes,
         patch_size=(2,4,4),
         embed_dim=96,
@@ -167,7 +167,7 @@ def VideoSwinT(num_classes, window_size=(8,7,7), drop_path_rate=0.2, **kwargs):
     return model
 
 def VideoSwinS(num_classes, window_size=(8,7,7), drop_path_rate=0.2, **kwargs):
-    model = TFSwinTransformer3D(
+    model = SwinTransformer3D(
         num_classes=num_classes,
         patch_size=(2,4,4),
         embed_dim=96,
@@ -187,7 +187,7 @@ def VideoSwinS(num_classes, window_size=(8,7,7), drop_path_rate=0.2, **kwargs):
     return model
 
 def VideoSwinB(num_classes, window_size=(8,7,7), drop_path_rate=0.2, **kwargs):
-    model = TFSwinTransformer3D(
+    model = SwinTransformer3D(
         num_classes=num_classes,
         patch_size=(2,4,4),
         embed_dim=128,

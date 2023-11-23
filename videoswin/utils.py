@@ -1,7 +1,7 @@
 import numpy as np
-import tensorflow as tf
+from keras import ops
 
-def tf_window_partition(x, window_size):
+def window_partition(x, window_size):
     """
     Args:
         x: (B, D, H, W, C)
@@ -11,7 +11,7 @@ def tf_window_partition(x, window_size):
         windows: (B*num_windows, window_size*window_size, C)
     """
     
-    input_shape = tf.shape(x)
+    input_shape = ops.shape(x)
     B, D, H, W, C = (
         input_shape[0],
         input_shape[1],
@@ -20,7 +20,7 @@ def tf_window_partition(x, window_size):
         input_shape[4],
     )
     
-    x = tf.reshape(
+    x = ops.reshape(
         x, 
         [
             B,
@@ -31,13 +31,13 @@ def tf_window_partition(x, window_size):
         ]
     )
     
-    x = tf.transpose(x, perm=[0,1,3,5,2,4,6,7])
-    windows = tf.reshape(x, [-1, window_size[0]*window_size[1]*window_size[2], C])      
+    x = ops.transpose(x, [0,1,3,5,2,4,6,7])
+    windows = ops.reshape(x, [-1, window_size[0]*window_size[1]*window_size[2], C])      
     
     return windows
 
 
-def tf_window_reverse(windows, window_size, B, D, H, W):
+def window_reverse(windows, window_size, B, D, H, W):
     """
     Args:
         windows: (B*num_windows, window_size, window_size, C)
@@ -48,7 +48,7 @@ def tf_window_reverse(windows, window_size, B, D, H, W):
     Returns:
         x: (B, D, H, W, C)
     """
-    x = tf.reshape(
+    x = ops.reshape(
         windows,
         [
             B, 
@@ -61,8 +61,8 @@ def tf_window_reverse(windows, window_size, B, D, H, W):
             -1
         ]
     )
-    x = tf.transpose(x, perm=[0, 1, 4, 2, 5, 3, 6, 7])
-    x = tf.reshape(x, [B, D, H, W, -1])
+    x = ops.transpose(x, [0, 1, 4, 2, 5, 3, 6, 7])
+    x = ops.reshape(x, [B, D, H, W, -1])
     return x
 
 
@@ -95,7 +95,7 @@ def get_window_size(x_size, window_size, shift_size=None):
         return tuple(use_window_size), tuple(use_shift_size)
     
 
-def tf_compute_mask(D, H, W, window_size, shift_size):
+def compute_mask(D, H, W, window_size, shift_size):
     img_mask = np.zeros((1, D, H, W, 1))
     cnt = 0
     for d in slice(-window_size[0]), slice(-window_size[0], -shift_size[0]), slice(-shift_size[0],None):
@@ -103,9 +103,9 @@ def tf_compute_mask(D, H, W, window_size, shift_size):
             for w in slice(-window_size[2]), slice(-window_size[2], -shift_size[2]), slice(-shift_size[2],None):
                 img_mask[:, d, h, w, :] = cnt
                 cnt = cnt + 1
-    mask_windows = tf_window_partition(img_mask, window_size) 
-    mask_windows = tf.squeeze(mask_windows, axis = -1)
-    attn_mask = tf.expand_dims(mask_windows, axis=1) - tf.expand_dims(mask_windows, axis=2)
-    attn_mask = tf.where(attn_mask != 0, -100.0, attn_mask)
-    attn_mask = tf.where(attn_mask == 0, 0.0 , attn_mask)
+    mask_windows = window_partition(img_mask, window_size) 
+    mask_windows = ops.squeeze(mask_windows, axis = -1)
+    attn_mask = ops.expand_dims(mask_windows, axis=1) - ops.expand_dims(mask_windows, axis=2)
+    attn_mask = ops.where(attn_mask != 0, -100.0, attn_mask)
+    attn_mask = ops.where(attn_mask == 0, 0.0 , attn_mask)
     return attn_mask
