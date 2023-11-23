@@ -1,16 +1,16 @@
 
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
+import keras
+from keras import layers
+from keras import ops
 
-from ..layers import TFMlp
-from ..layers import TFWindowAttention3D
-from ..layers import TFDropPath
+from ..layers import Mlp
+from ..layers import WindowAttention3D
+from ..layers import DropPath
 from ..utils import get_window_size
-from ..utils import tf_window_partition
-from ..utils import tf_window_reverse
+from ..utils import window_partition
+from ..utils import window_reverse
 
-class TFSwinTransformerBlock3D(keras.Model):
+class SwinTransformerBlock3D(keras.Model):
     """ Swin Transformer Block.
 
     Args:
@@ -58,7 +58,7 @@ class TFSwinTransformerBlock3D(keras.Model):
         
         # layers
         self.norm1 = norm_layer(axis=-1, epsilon=1e-05)
-        self.attn = TFWindowAttention3D(
+        self.attn = WindowAttention3D(
             dim, 
             window_size=window_size, 
             num_heads=num_heads, 
@@ -67,9 +67,9 @@ class TFSwinTransformerBlock3D(keras.Model):
             attn_drop=attn_drop,
             proj_drop=drop
         )
-        self.drop_path = TFDropPath(drop_path) if drop_path > 0. else layers.Identity()  
+        self.drop_path = DropPath(drop_path) if drop_path > 0. else layers.Identity()  
         self.norm2 = norm_layer(axis=-1, epsilon=1e-05)
-        self.mlp = TFMlp(
+        self.mlp = Mlp(
             in_features=dim, 
             hidden_features=mlp_hidden_dim, 
             act_layer=act_layer, 
@@ -89,7 +89,7 @@ class TFSwinTransformerBlock3D(keras.Model):
         
 
     def first_forward(self, x, mask_matrix, return_attns, training):
-        input_shape = tf.shape(x)
+        input_shape = ops.shape(x)
         B,D,H,W,C = (
             input_shape[0], 
             input_shape[1],
@@ -102,13 +102,13 @@ class TFSwinTransformerBlock3D(keras.Model):
         
         # pad feature maps to multiples of window size
         pad_l  = pad_t = pad_d0 = 0
-        pad_d1 = tf.math.floormod(-D + window_size[0], window_size[0])
-        pad_b  = tf.math.floormod(-H + window_size[1], window_size[1])
-        pad_r  = tf.math.floormod(-W + window_size[2], window_size[2])
+        pad_d1 = ops.mod(-D + window_size[0], window_size[0])
+        pad_b  = ops.mod(-H + window_size[1], window_size[1])
+        pad_r  = ops.mod(-W + window_size[2], window_size[2])
         paddings = [[0, 0], [pad_d0, pad_d1], [pad_t, pad_b], [pad_l, pad_r], [0, 0]]
-        x = tf.pad(x, paddings)
+        x = ops.pad(x, paddings)
         
-        input_shape = tf.shape(x)
+        input_shape = ops.shape(x)
         Dp, Hp, Wp =  (
             input_shape[1],
             input_shape[2],
@@ -117,7 +117,7 @@ class TFSwinTransformerBlock3D(keras.Model):
         
         # Cyclic Shift
         if self.roll:
-            shifted_x = tf.roll(
+            shifted_x = ops.roll(
                 x, 
                 shift=(-shift_size[0], -shift_size[1], -shift_size[2]), 
                 axis=(1, 2, 3)
@@ -128,7 +128,7 @@ class TFSwinTransformerBlock3D(keras.Model):
             attn_mask = None
         
         # partition windows
-        x_windows = tf_window_partition(shifted_x, window_size) 
+        x_windows = window_partition(shifted_x, window_size) 
         
         # get attentions params
         if return_attns:
@@ -141,13 +141,13 @@ class TFSwinTransformerBlock3D(keras.Model):
             ) 
 
         # reverse the swin windows
-        shifted_x = tf_window_reverse(
+        shifted_x = window_reverse(
             attn_windows, window_size, B, Dp, Hp, Wp
         ) 
 
         # Reverse Cyclic Shift
         if self.roll:
-            x = tf.roll(
+            x = ops.roll(
                 shifted_x, 
                 shift=(shift_size[0], shift_size[1], shift_size[2]), 
                 axis=(1, 2, 3)
@@ -156,11 +156,11 @@ class TFSwinTransformerBlock3D(keras.Model):
             x = shifted_x
 
         # pad if required    
-        do_pad = tf.logical_or(
-            tf.greater(pad_d1, 0),
-            tf.logical_or(tf.greater(pad_r, 0), tf.greater(pad_b, 0))
+        do_pad = ops.logical_or(
+            ops.greater(pad_d1, 0),
+            ops.logical_or(ops.greater(pad_r, 0), ops.greater(pad_b, 0))
         )
-        x = tf.cond(
+        x = ops.cond(
             do_pad, 
             lambda: x[:, :D, :H, :W, :], 
             lambda: x

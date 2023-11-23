@@ -1,15 +1,16 @@
 
 from functools import partial
 
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
+import keras
+from keras import layers
+from keras import initializers
+from keras import ops
 
-from .swin_transformer import TFSwinTransformerBlock3D
+from .swin_transformer import SwinTransformerBlock3D
 from ..utils import get_window_size
 from ..utils import tf_compute_mask
 
-class TFBasicLayer(keras.Model):
+class BasicLayer(keras.Model):
     """ A basic Swin Transformer layer for one stage.
 
     Args:
@@ -50,7 +51,7 @@ class TFBasicLayer(keras.Model):
 
         # build blocks
         self.blocks = [
-            TFSwinTransformerBlock3D(
+            SwinTransformerBlock3D(
                 dim=dim,
                 num_heads=num_heads,
                 window_size=window_size,
@@ -72,11 +73,11 @@ class TFBasicLayer(keras.Model):
             )
     
     def compute_dim_padded(self, input_dim, window_dim_size):
-        input_dim = tf.cast(input_dim, dtype=tf.float32)
-        window_dim_size = tf.cast(window_dim_size, dtype=tf.float32)
-        return tf.cast(
-            tf.math.ceil(input_dim / window_dim_size) * window_dim_size,
-            tf.int32
+        input_dim = ops.cast(input_dim, dtype="float32")
+        window_dim_size = ops.cast(window_dim_size, dtype="float32")
+        return ops.cast(
+            ops.ceil(input_dim / window_dim_size) * window_dim_size,
+            "int32"
         )
     
     def build(self, input_shape):
@@ -93,7 +94,7 @@ class TFBasicLayer(keras.Model):
         
 
     def call(self, x, training=None, return_attns=False):
-        input_shape = tf.shape(x)
+        input_shape = ops.shape(x)
         B,D,H,W,C = (
             input_shape[0], 
             input_shape[1],
@@ -117,7 +118,7 @@ class TFBasicLayer(keras.Model):
                     training=training
                 )
             
-        x = tf.reshape(
+        x = ops.reshape(
             x, [B, D, H, W, -1]
         )
  
