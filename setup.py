@@ -14,7 +14,7 @@ setup(
     keywords=["deep learning", "image retrieval", "image recognition"],
     install_requires=[
         "opencv-python>=4.1.2",
-        "tensorflow>=2.12",
+        "keras-nightly",
     ],
     setup_requires=[
         "pytest-runner",
