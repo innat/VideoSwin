@@ -1,9 +1,9 @@
 
 import math
-import tensorflow as tf
-from tensorflow.keras import layers
+from keras import layers
+from keras import ops
 
-class TFAdaptiveAveragePooling3D(layers.Layer):
+class AdaptiveAveragePooling3D(layers.Layer):
     def __init__(self, output_size, **kwargs):
         super().__init__(**kwargs)
         self.output_size = output_size
@@ -23,7 +23,7 @@ class TFAdaptiveAveragePooling3D(layers.Layer):
         )(inputs)
         
         # output_shape: [bs, channel_dim]
-        avg_pool = tf.squeeze(
+        avg_pool = ops.squeeze(
             avg_pool, [1,2,3]
         )
         

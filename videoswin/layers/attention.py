@@ -1,8 +1,8 @@
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
+import keras
+from keras import layers
+from keras import ops
 
-class TFWindowAttention3D(keras.Model):
+class WindowAttention3D(keras.Model):
     """ Window based multi-head self attention (W-MSA) module with relative position bias.
     It supports both of shifted and non-shifted window.
     Args:
@@ -41,18 +41,18 @@ class TFWindowAttention3D(keras.Model):
         self.proj_drop = layers.Dropout(proj_drop)
         
     def get_relative_position_index(self, window_depth, window_height, window_width):
-        y_y, z_z, x_x = tf.meshgrid(
+        y_y, z_z, x_x = ops.meshgrid(
             range(window_width), range(window_depth), range(window_height)
         )
-        coords = tf.stack([z_z, y_y, x_x], axis=0)
-        coords_flatten = tf.reshape(coords, [3, -1])
+        coords = ops.stack([z_z, y_y, x_x], axis=0)
+        coords_flatten = ops.reshape(coords, [3, -1])
         relative_coords = coords_flatten[:, :, None] - coords_flatten[:, None, :]
-        relative_coords = tf.transpose(relative_coords, perm=[1, 2, 0])
+        relative_coords = ops.transpose(relative_coords, perm=[1, 2, 0])
         z_z = (relative_coords[:, :, 0] + window_depth  - 1) * (2 * window_height - 1) * (2 * window_width - 1)
         x_x = (relative_coords[:, :, 1] + window_height - 1) * (2 * window_width - 1)
         y_y = (relative_coords[:, :, 2] + window_width  - 1)
-        relative_coords = tf.stack([z_z, x_x, y_y], axis=-1)
-        return tf.reduce_sum(relative_coords, axis=-1)
+        relative_coords = ops.stack([z_z, x_x, y_y], axis=-1)
+        return ops.reduce_sum(relative_coords, axis=-1)
 
     def build(self, input_shape):
         self.relative_position_bias_table = self.add_weight(
@@ -73,7 +73,7 @@ class TFWindowAttention3D(keras.Model):
 
 
     def call(self, x, mask=None, return_attns=False, training=None):
-        input_shape = tf.shape(x)
+        input_shape = ops.shape(x)
         B_,N,C = (
             input_shape[0],
             input_shape[1],
@@ -81,34 +81,34 @@ class TFWindowAttention3D(keras.Model):
         )
         
         qkv = self.qkv(x)
-        qkv = tf.reshape(qkv, [B_, N, 3, self.num_heads, C // self.num_heads])
-        qkv = tf.transpose(qkv, perm=[2, 0, 3, 1, 4])
-        q, k, v = tf.split(qkv, 3, axis=0)
+        qkv = ops.reshape(qkv, [B_, N, 3, self.num_heads, C // self.num_heads])
+        qkv = ops.transpose(qkv, perm=[2, 0, 3, 1, 4])
+        q, k, v = ops.split(qkv, 3, axis=0)
 
-        q = tf.squeeze(q, axis=0) * self.scale
-        k = tf.squeeze(k, axis=0)
-        v = tf.squeeze(v, axis=0)
-        attn = tf.linalg.matmul(q, k, transpose_b=True)
+        q = ops.squeeze(q, axis=0) * self.scale
+        k = ops.squeeze(k, axis=0)
+        v = ops.squeeze(v, axis=0)
+        attn = ops.matmul(q, ops.transpose(k, [0, 1, 3, 2]))
         
-        relative_position_bias = tf.gather(
+        relative_position_bias = ops.take(
             self.relative_position_bias_table, self.relative_position_index[:N, :N]
         )
-        relative_position_bias = tf.reshape(relative_position_bias, [N, N, -1])
-        relative_position_bias = tf.transpose(relative_position_bias, perm=[2, 0, 1])
+        relative_position_bias = ops.reshape(relative_position_bias, [N, N, -1])
+        relative_position_bias = ops.transpose(relative_position_bias, perm=[2, 0, 1])
         attn = attn + relative_position_bias[None, ...]
   
         if mask is not None:
-            nW = tf.shape(mask)[0]
-            mask = tf.cast(mask, dtype=attn.dtype)
-            attn = tf.reshape(attn, [B_ // nW, nW, self.num_heads, N, N]) + mask[:, None, :, :]
-            attn = tf.reshape(attn, [-1, self.num_heads, N, N])
+            nW = ops.shape(mask)[0]
+            mask = ops.cast(mask, dtype=attn.dtype)
+            attn = ops.reshape(attn, [B_ // nW, nW, self.num_heads, N, N]) + mask[:, None, :, :]
+            attn = ops.reshape(attn, [-1, self.num_heads, N, N])
 
-        attn = tf.nn.softmax(attn, axis=-1)
+        attn = keras.activations.softmax(attn, axis=-1)
         attn = self.attn_drop(attn, training=training)
 
-        x = tf.linalg.matmul(attn, v)
-        x = tf.transpose(x, perm=[0, 2, 1, 3])
-        x = tf.reshape(x, [B_, N, C])
+        x = ops.matmul(attn, v)
+        x = ops.transpose(x, perm=[0, 2, 1, 3])
+        x = ops.reshape(x, [B_, N, C])
         x = self.proj(x)
         x = self.proj_drop(x, training=training)
         

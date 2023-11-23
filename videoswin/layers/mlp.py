@@ -1,8 +1,7 @@
 
-import tensorflow as tf
-from tensorflow.keras import layers
+from keras import layers
 
-class TFMlp(layers.Layer):
+class Mlp(layers.Layer):
     """ Multilayer perceptron."""
     
     def __init__(
@@ -11,7 +10,7 @@ class TFMlp(layers.Layer):
         hidden_features=None,
         out_features=None,
         drop=0.0,
-        act_layer=layers.Activation(tf.nn.gelu),
+        act_layer=layers.Activation("gelu"),
         **kwargs
     ):
         super().__init__(**kwargs)

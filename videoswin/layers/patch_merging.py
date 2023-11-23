@@ -1,8 +1,8 @@
 
-import tensorflow as tf
-from tensorflow.keras import layers
+from keras import layers
+from keras import ops
 
-class TFPatchMerging(layers.Layer):
+class PatchMerging(layers.Layer):
     """ Patch Merging Layer
 
     Args:
@@ -27,7 +27,7 @@ class TFPatchMerging(layers.Layer):
         Args:
             x: Input feature, tensor size (B, D, H, W, C).
         """
-        input_shape = tf.shape(x)
+        input_shape = ops.shape(x)
         H,W = (
             input_shape[2],
             input_shape[3],
@@ -37,17 +37,17 @@ class TFPatchMerging(layers.Layer):
         paddings = [
             [0, 0], 
             [0, 0], 
-            [0, tf.math.floormod(H, 2)], 
-            [0, tf.math.floormod(W, 2)], 
+            [0, ops.mod(H, 2)], 
+            [0, ops.mod(W, 2)], 
             [0, 0]
         ]
-        x = tf.pad(x, paddings)
+        x = ops.pad(x, paddings)
 
         x0 = x[:, :, 0::2, 0::2, :]  # B D H/2 W/2 C
         x1 = x[:, :, 1::2, 0::2, :]  # B D H/2 W/2 C
         x2 = x[:, :, 0::2, 1::2, :]  # B D H/2 W/2 C
         x3 = x[:, :, 1::2, 1::2, :]  # B D H/2 W/2 C
-        x = tf.concat([x0, x1, x2, x3], axis=-1)  # B D H/2 W/2 4*C
+        x = ops.concatenate([x0, x1, x2, x3], axis=-1)  # B D H/2 W/2 4*C
         x = self.norm(x)
         x = self.reduction(x)
         return x

@@ -1,9 +1,9 @@
 
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
+import keras
+from keras import layers
+from keras import ops
 
-class TFPatchEmbed3D(keras.Model):
+class PatchEmbed3D(keras.Model):
     """ Video to Patch Embedding.
 
     Args:
@@ -58,7 +58,7 @@ class TFPatchEmbed3D(keras.Model):
         
     def call(self, x):
         
-        x = tf.pad(x, self.pads)
+        x = ops.pad(x, self.pads)
         x = self.proj(x)
         
         if self.norm is not None:
