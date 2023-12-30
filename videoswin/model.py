@@ -143,7 +143,7 @@ class SwinTransformer3D(keras.Model):
         x = self.head(x)
 
         if return_attention_maps:
-            return x, attention_maps
+            return x, attention_maps_dict
 
         return x
 
