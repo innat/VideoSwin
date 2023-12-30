@@ -4,7 +4,7 @@ from keras import ops
 def window_partition(x, window_size):
     """
     Args:
-        x: (B, D, H, W, C)
+        x: (batch_size, depth, height, width, channel)
         window_size (tuple[int]): window size
         
     Returns:
@@ -12,7 +12,7 @@ def window_partition(x, window_size):
     """
     
     input_shape = ops.shape(x)
-    B, D, H, W, C = (
+    batch_size, depth, height, width, channel = (
         input_shape[0],
         input_shape[1],
         input_shape[2],
@@ -23,11 +23,11 @@ def window_partition(x, window_size):
     x = ops.reshape(
         x, 
         [
-            B,
-            D // window_size[0], window_size[0], 
-            H // window_size[1], window_size[1], 
-            W // window_size[2], window_size[2], 
-            C
+            batch_size,
+            depth // window_size[0], window_size[0], 
+            height // window_size[1], window_size[1], 
+            width // window_size[2], window_size[2], 
+            channel
         ]
     )
     
@@ -37,24 +37,24 @@ def window_partition(x, window_size):
     return windows
 
 
-def window_reverse(windows, window_size, B, D, H, W):
+def window_reverse(windows, window_size, batch_size, depth, height, width):
     """
     Args:
         windows: (B*num_windows, window_size, window_size, C)
         window_size (tuple[int]): Window size
-        H (int): Height of image
-        W (int): Width of image
+        height (int): Height of image
+        width (int): Width of image
 
     Returns:
-        x: (B, D, H, W, C)
+        x: (batch_size, depth, height, width, channel)
     """
     x = ops.reshape(
         windows,
         [
-            B, 
-            D // window_size[0], 
-            H // window_size[1], 
-            W // window_size[2], 
+            batch_size, 
+            depth // window_size[0], 
+            height // window_size[1], 
+            width // window_size[2], 
             window_size[0], 
             window_size[1], 
             window_size[2], 
@@ -62,7 +62,7 @@ def window_reverse(windows, window_size, B, D, H, W):
         ]
     )
     x = ops.transpose(x, [0, 1, 4, 2, 5, 3, 6, 7])
-    x = ops.reshape(x, [B, D, H, W, -1])
+    x = ops.reshape(x, [batch_size, depth, height, width, -1])
     return x
 
 
@@ -95,8 +95,8 @@ def get_window_size(x_size, window_size, shift_size=None):
         return tuple(use_window_size), tuple(use_shift_size)
     
 
-def compute_mask(D, H, W, window_size, shift_size):
-    img_mask = np.zeros((1, D, H, W, 1))
+def compute_mask(depth, height, width, window_size, shift_size):
+    img_mask = np.zeros((1, depth, height, width, 1))
     cnt = 0
     for d in slice(-window_size[0]), slice(-window_size[0], -shift_size[0]), slice(-shift_size[0],None):
         for h in slice(-window_size[1]), slice(-window_size[1], -shift_size[1]), slice(-shift_size[1],None):
