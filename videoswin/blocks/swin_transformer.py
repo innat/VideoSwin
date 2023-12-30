@@ -3,7 +3,7 @@ import keras
 from keras import layers
 from keras import ops
 
-from ..layers import Mlp
+from ..layers import MLP
 from ..layers import WindowAttention3D
 from ..layers import DropPath
 from ..utils import get_window_size
@@ -37,7 +37,7 @@ class SwinTransformerBlock3D(keras.Model):
         mlp_ratio=4., 
         qkv_bias=True, 
         qk_scale=None, 
-        drop=0., 
+        drop_rate=0., 
         attn_drop=0., 
         drop_path=0.,
         act_layer=layers.Activation('gelu'), 
@@ -50,31 +50,18 @@ class SwinTransformerBlock3D(keras.Model):
         self.window_size = window_size
         self.shift_size = shift_size
         self.mlp_ratio = mlp_ratio
-        mlp_hidden_dim = int(dim * mlp_ratio)
+        self.qkv_bias = qkv_bias
+        self.qk_scale = qk_scale
+        self.attn_drop = attn_drop
+        self.drop_rate = drop_rate
+        self.drop_path = drop_path
+        self.mlp_hidden_dim = int(dim * mlp_ratio)
+        self.act_layer = act_layer
+        self.norm_layer = norm_layer
         
         assert 0 <= self.shift_size[0] < self.window_size[0], "shift_size must in 0-window_size"
         assert 0 <= self.shift_size[1] < self.window_size[1], "shift_size must in 0-window_size"
         assert 0 <= self.shift_size[2] < self.window_size[2], "shift_size must in 0-window_size"
-        
-        # layers
-        self.norm1 = norm_layer(axis=-1, epsilon=1e-05)
-        self.attn = WindowAttention3D(
-            dim, 
-            window_size=window_size, 
-            num_heads=num_heads, 
-            qkv_bias=qkv_bias, 
-            qk_scale=qk_scale, 
-            attn_drop=attn_drop,
-            proj_drop=drop
-        )
-        self.drop_path = DropPath(drop_path) if drop_path > 0. else layers.Identity()  
-        self.norm2 = norm_layer(axis=-1, epsilon=1e-05)
-        self.mlp = Mlp(
-            in_features=dim, 
-            hidden_features=mlp_hidden_dim, 
-            act_layer=act_layer, 
-            drop=drop
-        )
         
     def build(self, input_shape):
         self.window_size, self.shift_size = get_window_size(
@@ -84,13 +71,30 @@ class SwinTransformerBlock3D(keras.Model):
             self.roll = True
         else:
             self.roll = False
+            
+        # layers
+        self.norm1 = self.norm_layer(axis=-1, epsilon=1e-05)
+        self.attn = WindowAttention3D(
+            self.dim, 
+            window_size=self.window_size, 
+            num_heads=self.num_heads, 
+            qkv_bias=self.qkv_bias, 
+            qk_scale=self.qk_scale, 
+            attn_drop=self.attn_drop,
+            proj_drop=self.drop_rate
+        )
+        self.drop_path = DropPath(self.drop_path) if self.drop_path > 0. else layers.Identity()  
+        self.norm2 = self.norm_layer(axis=-1, epsilon=1e-05)
+        self.mlp = MLP(
+            in_features=self.dim, 
+            hidden_features=self.mlp_hidden_dim, 
+            act_layer=self.act_layer, 
+            drop_rate=self.drop_rate
+        )
         
-        super().build(input_shape)
-        
-
-    def first_forward(self, x, mask_matrix, return_attns, training):
+    def _forward(self, x, mask_matrix, return_attention_maps, training):
         input_shape = ops.shape(x)
-        B,D,H,W,C = (
+        batch_size, depth, height, width, channel = (
             input_shape[0], 
             input_shape[1],
             input_shape[2],
@@ -102,14 +106,14 @@ class SwinTransformerBlock3D(keras.Model):
         
         # pad feature maps to multiples of window size
         pad_l  = pad_t = pad_d0 = 0
-        pad_d1 = ops.mod(-D + window_size[0], window_size[0])
-        pad_b  = ops.mod(-H + window_size[1], window_size[1])
-        pad_r  = ops.mod(-W + window_size[2], window_size[2])
+        pad_d1 = ops.mod(-depth + window_size[0], window_size[0])
+        pad_b  = ops.mod(-height + window_size[1], window_size[1])
+        pad_r  = ops.mod(-width + window_size[2], window_size[2])
         paddings = [[0, 0], [pad_d0, pad_d1], [pad_t, pad_b], [pad_l, pad_r], [0, 0]]
         x = ops.pad(x, paddings)
         
         input_shape = ops.shape(x)
-        Dp, Hp, Wp =  (
+        depth_p, height_p, width_p =  (
             input_shape[1],
             input_shape[2],
             input_shape[3],
@@ -131,18 +135,21 @@ class SwinTransformerBlock3D(keras.Model):
         x_windows = window_partition(shifted_x, window_size) 
         
         # get attentions params
-        if return_attns:
-            attn_windows, attn_scores = self.attn(
-                x_windows, mask=attn_mask, return_attns=return_attns, training=training
+        if return_attention_maps:
+            attention_windows, attention_maps = self.attn(
+                x_windows, 
+                mask=attn_mask, 
+                return_attention_maps=return_attention_maps, 
+                training=training
             )
         else:
-             attn_windows = self.attn(
+             attention_windows = self.attn(
                 x_windows, mask=attn_mask, training=training
             ) 
 
         # reverse the swin windows
         shifted_x = window_reverse(
-            attn_windows, window_size, B, Dp, Hp, Wp
+            attention_windows, window_size, batch_size, depth_p, height_p, width_p
         ) 
 
         # Reverse Cyclic Shift
@@ -161,36 +168,33 @@ class SwinTransformerBlock3D(keras.Model):
             ops.logical_or(ops.greater(pad_r, 0), ops.greater(pad_b, 0))
         )
         x = ops.cond(
-            do_pad, 
-            lambda: x[:, :D, :H, :W, :], 
+            do_pad,
+            lambda: x[:, :depth, :height, :width, :], 
             lambda: x
         )
 
-        if return_attns:
-            return x, attn_scores
+        if return_attention_maps:
+            return x, attention_maps
         
         return x
 
-    def second_forward(self, x, training):
-        return self.drop_path(
-            self.mlp(self.norm2(x)), training=training
-        )
-
-    def call(self, x, mask_matrix=None, return_attns=False, training=None):
+    def call(self, x, mask_matrix=None, return_attention_maps=False, training=None):
         
         shortcut = x
-        x = self.first_forward(
-            x, mask_matrix, return_attns, training
+        x = self._forward(
+            x, mask_matrix, return_attention_maps, training
         )
         
-        if return_attns:
-            x, attn_scores = x
+        if return_attention_maps:
+            x, attention_maps = x
 
         x = shortcut + self.drop_path(x)
-        x = x + self.second_forward(x, training)
+        x = self.drop_path(
+            self.mlp(self.norm2(x)), training=training
+        )
         
-        if return_attns:
-            return x, attn_scores
+        if return_attention_maps:
+            return x, attention_maps
         
         return x
     
