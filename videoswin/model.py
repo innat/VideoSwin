@@ -1,20 +1,22 @@
-
 import os
 import warnings
-import numpy as np
 from functools import partial
+
+import numpy as np
+
 warnings.simplefilter(action="ignore")
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 import keras
 from keras import layers
-from videoswin.layers import PatchEmbed3D
-from videoswin.layers import PatchMerging
+
 from videoswin.blocks import BasicLayer
+from videoswin.layers import PatchEmbed3D, PatchMerging
+
 
 @keras.utils.register_keras_serializable(package="swin.transformer.3d")
 class SwinTransformer3D(keras.Model):
-    """ Swin Transformer backbone.
+    """Swin Transformer backbone.
         A Keras impl of : `Swin Transformer: Hierarchical Vision Transformer using Shifted Windows`  -
           https://arxiv.org/pdf/2103.14030
 
@@ -36,28 +38,28 @@ class SwinTransformer3D(keras.Model):
         frozen_stages (int): Stages to be frozen (stop grad and set eval mode).
             -1 means not freezing any parameters.
     """
-    
+
     def __init__(
-        self, 
-        patch_size=(4,4,4),
+        self,
+        patch_size=(4, 4, 4),
         in_chans=3,
         embed_dim=96,
         depths=[2, 2, 6, 2],
         num_heads=[3, 6, 12, 24],
-        window_size=(2,7,7),
-        mlp_ratio=4.,
+        window_size=(2, 7, 7),
+        mlp_ratio=4.0,
         qkv_bias=True,
         qk_scale=None,
-        drop_rate=0.,
-        attn_drop_rate=0.,
+        drop_rate=0.0,
+        attn_drop_rate=0.0,
         drop_path_rate=0.2,
         norm_layer=layers.LayerNormalization,
         patch_norm=False,
         frozen_stages=-1,
         in_channels=768,
         num_classes=400,
-        **kwargs
-    ):  
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.num_layers = len(depths)
         self.embed_dim = embed_dim
@@ -80,49 +82,51 @@ class SwinTransformer3D(keras.Model):
     def build(self, input_shape):
         # split image into non-overlapping patches
         self.patch_embed = PatchEmbed3D(
-            patch_size=self.patch_size, 
-            in_chans=self.in_chans, 
+            patch_size=self.patch_size,
+            in_chans=self.in_chans,
             embed_dim=self.embed_dim,
             norm_layer=self.norm_layer if self.patch_norm else None,
-            name='PatchEmbed3D'
+            name="PatchEmbed3D",
         )
-        self.pos_drop = layers.Dropout(self.drop_rate, name='pos_drop')
+        self.pos_drop = layers.Dropout(self.drop_rate, name="pos_drop")
 
         # stochastic depth
-        dpr = np.linspace(0., self.drop_path_rate, sum(self.depths)).tolist() 
+        dpr = np.linspace(0.0, self.drop_path_rate, sum(self.depths)).tolist()
 
         # build layers
         self.basic_layers = []
         for i_layer in range(self.num_layers):
             layer = BasicLayer(
-                dim= int(self.embed_dim * 2 ** i_layer),
+                dim=int(self.embed_dim * 2**i_layer),
                 depth=self.depths[i_layer],
                 num_heads=self.num_heads[i_layer],
                 window_size=self.window_size,
                 mlp_ratio=self.mlp_ratio,
-                qkv_bias=self.qkv_bias, 
+                qkv_bias=self.qkv_bias,
                 qk_scale=self.qk_scale,
-                drop_rate=self.drop_rate, 
+                drop_rate=self.drop_rate,
                 attn_drop=self.attn_drop_rate,
-                drop_path=dpr[sum(self.depths[:i_layer]):sum(self.depths[:i_layer + 1])],
+                drop_path=dpr[
+                    sum(self.depths[:i_layer]) : sum(self.depths[: i_layer + 1])
+                ],
                 norm_layer=self.norm_layer,
-                downsample=PatchMerging if ( i_layer < self.num_layers - 1) else None,
-                name=f'BasicLayer{i_layer+1}'
+                downsample=PatchMerging if (i_layer < self.num_layers - 1) else None,
+                name=f"BasicLayer{i_layer+1}",
             )
             self.basic_layers.append(layer)
-    
-        self.norm = self.norm_layer(axis=-1, epsilon=1e-05, name='norm')
+
+        self.norm = self.norm_layer(axis=-1, epsilon=1e-05, name="norm")
         self.avg_pool3d = layers.GlobalAveragePooling3D()
         self.head = layers.Dense(
-            self.num_classes, use_bias=True, name='head', dtype='float32'
+            self.num_classes, use_bias=True, name="head", dtype="float32"
         )
         self.build_shape = input_shape[1:]
-    
+
     def call(self, x, return_attention_maps=False, training=None):
         # tensor embeddings
         x = self.patch_embed(x)
         x = self.pos_drop(x, training=training)
-        
+
         # video-swin block computation
         attention_maps_dict = {}
         for layer in self.basic_layers:
@@ -132,83 +136,81 @@ class SwinTransformer3D(keras.Model):
                 )
                 attention_maps_dict[f"{layer.name}_attention_maps"] = attention_maps
             else:
-                x = layer(
-                    x, training=training
-                )
+                x = layer(x, training=training)
 
         # head branch
         x = self.norm(x)
         x = self.avg_pool3d(x)
         x = self.head(x)
-    
+
         if return_attention_maps:
             return x, attention_maps
-        
+
         return x
 
     def build_graph(self):
-        x = keras.Input(shape=self.build_shape, name='input_graph')
+        x = keras.Input(shape=self.build_shape, name="input_graph")
         return keras.Model(inputs=[x], outputs=self.call(x))
-    
 
-def VideoSwinT(num_classes, window_size=(8,7,7), drop_path_rate=0.2, **kwargs):
+
+def VideoSwinT(num_classes, window_size=(8, 7, 7), drop_path_rate=0.2, **kwargs):
     model = SwinTransformer3D(
         num_classes=num_classes,
-        patch_size=(2,4,4),
+        patch_size=(2, 4, 4),
         embed_dim=96,
         depths=[2, 2, 6, 2],
         num_heads=[3, 6, 12, 24],
         window_size=window_size,
-        mlp_ratio=4.,
+        mlp_ratio=4.0,
         qkv_bias=True,
         qk_scale=None,
-        drop_rate=0.,
-        attn_drop_rate=0.,
+        drop_rate=0.0,
+        attn_drop_rate=0.0,
         drop_path_rate=drop_path_rate,
         norm_layer=partial(layers.LayerNormalization, epsilon=1e-05),
         patch_norm=True,
-        **kwargs
+        **kwargs,
     )
     return model
 
-def VideoSwinS(num_classes, window_size=(8,7,7), drop_path_rate=0.2, **kwargs):
+
+def VideoSwinS(num_classes, window_size=(8, 7, 7), drop_path_rate=0.2, **kwargs):
     model = SwinTransformer3D(
         num_classes=num_classes,
-        patch_size=(2,4,4),
+        patch_size=(2, 4, 4),
         embed_dim=96,
         depths=[2, 2, 18, 2],
         num_heads=[3, 6, 12, 24],
         window_size=window_size,
-        mlp_ratio=4.,
+        mlp_ratio=4.0,
         qkv_bias=True,
         qk_scale=None,
-        drop_rate=0.,
-        attn_drop_rate=0.,
+        drop_rate=0.0,
+        attn_drop_rate=0.0,
         drop_path_rate=drop_path_rate,
         norm_layer=partial(layers.LayerNormalization, epsilon=1e-05),
         patch_norm=True,
-        **kwargs
+        **kwargs,
     )
     return model
 
-def VideoSwinB(num_classes, window_size=(8,7,7), drop_path_rate=0.2, **kwargs):
+
+def VideoSwinB(num_classes, window_size=(8, 7, 7), drop_path_rate=0.2, **kwargs):
     model = SwinTransformer3D(
         num_classes=num_classes,
-        patch_size=(2,4,4),
+        patch_size=(2, 4, 4),
         embed_dim=128,
         depths=[2, 2, 18, 2],
         num_heads=[4, 8, 16, 32],
         window_size=window_size,
-        mlp_ratio=4.,
+        mlp_ratio=4.0,
         qkv_bias=True,
         qk_scale=None,
-        drop_rate=0.,
-        attn_drop_rate=0.,
+        drop_rate=0.0,
+        attn_drop_rate=0.0,
         drop_path_rate=drop_path_rate,
         norm_layer=partial(layers.LayerNormalization, epsilon=1e-05),
         patch_norm=True,
-        **kwargs
+        **kwargs,
     )
     return model
-
-

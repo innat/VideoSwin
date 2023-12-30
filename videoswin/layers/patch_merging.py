@@ -1,28 +1,22 @@
+from keras import layers, ops
 
-from keras import layers
-from keras import ops
 
 class PatchMerging(layers.Layer):
-    """ Patch Merging Layer
+    """Patch Merging Layer
 
     Args:
         dim (int): Number of input channels.
         norm_layer (keras.layers, optional): Normalization layer.  Default: LayerNormalization
     """
-        
-    def __init__(
-        self, 
-        dim, 
-        norm_layer=layers.LayerNormalization,
-        **kwargs
-    ):
+
+    def __init__(self, dim, norm_layer=layers.LayerNormalization, **kwargs):
         super().__init__(**kwargs)
         self.dim = dim
         self.reduction = layers.Dense(2 * dim, use_bias=False)
         self.norm = norm_layer(axis=-1, epsilon=1e-5)
-        
+
     def call(self, x):
-        """ call function.
+        """call function.
 
         Args:
             x: Input feature, tensor size (batch, depth, height, width, channel).
@@ -35,11 +29,11 @@ class PatchMerging(layers.Layer):
 
         # padding if needed
         paddings = [
-            [0, 0], 
-            [0, 0], 
-            [0, ops.mod(height, 2)], 
-            [0, ops.mod(width, 2)], 
-            [0, 0]
+            [0, 0],
+            [0, 0],
+            [0, ops.mod(height, 2)],
+            [0, ops.mod(width, 2)],
+            [0, 0],
         ]
         x = ops.pad(x, paddings)
 
@@ -51,4 +45,3 @@ class PatchMerging(layers.Layer):
         x = self.norm(x)
         x = self.reduction(x)
         return x
-    

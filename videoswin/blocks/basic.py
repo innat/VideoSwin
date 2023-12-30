@@ -1,16 +1,14 @@
-
 from functools import partial
 
 import keras
-from keras import layers
-from keras import ops
+from keras import layers, ops
 
+from ..utils import compute_mask, get_window_size
 from .swin_transformer import SwinTransformerBlock3D
-from ..utils import get_window_size
-from ..utils import compute_mask
+
 
 class BasicLayer(keras.Model):
-    """ A basic Swin Transformer layer for one stage.
+    """A basic Swin Transformer layer for one stage.
 
     Args:
         dim (int): Number of feature channels
@@ -26,19 +24,19 @@ class BasicLayer(keras.Model):
         norm_layer (keras.layers, optional): Normalization layer. Default: LayerNormalization
         downsample (keras.layers | None, optional): Downsample layer at the end of the layer. Default: None
     """
-    
+
     def __init__(
         self,
         dim,
         depth,
         num_heads,
-        window_size=(1,7,7),
-        mlp_ratio=4.,
+        window_size=(1, 7, 7),
+        mlp_ratio=4.0,
         qkv_bias=False,
         qk_scale=None,
-        drop_rate=0.,
-        attn_drop=0.,
-        drop_path=0.,
+        drop_rate=0.0,
+        attn_drop=0.0,
+        drop_path=0.0,
         norm_layer=partial(layers.LayerNormalization, epsilon=1e-05),
         downsample=None,
         **kwargs
@@ -57,53 +55,52 @@ class BasicLayer(keras.Model):
         self.drop_path = drop_path
         self.norm_layer = norm_layer
         self.downsample = downsample
-    
+
     def compute_dim_padded(self, input_dim, window_dim_size):
         input_dim = ops.cast(input_dim, dtype="float32")
         window_dim_size = ops.cast(window_dim_size, dtype="float32")
         return ops.cast(
-            ops.ceil(input_dim / window_dim_size) * window_dim_size,
-            "int32"
+            ops.ceil(input_dim / window_dim_size) * window_dim_size, "int32"
         )
-    
+
     def build(self, input_shape):
         window_size, shift_size = get_window_size(
             input_shape[1:-1], self.window_size, self.shift_size
         )
-        depth_p  = self.compute_dim_padded(input_shape[1], window_size[0])
+        depth_p = self.compute_dim_padded(input_shape[1], window_size[0])
         height_p = self.compute_dim_padded(input_shape[2], window_size[1])
-        width_p  = self.compute_dim_padded(input_shape[3], window_size[2])
+        width_p = self.compute_dim_padded(input_shape[3], window_size[2])
         self.attn_mask = compute_mask(
             depth_p, height_p, width_p, window_size, shift_size
         )
-        
+
         # build blocks
         self.blocks = [
             SwinTransformerBlock3D(
                 dim=self.dim,
                 num_heads=self.num_heads,
                 window_size=self.window_size,
-                shift_size=(0,0,0) if (i % 2 == 0) else self.shift_size,
+                shift_size=(0, 0, 0) if (i % 2 == 0) else self.shift_size,
                 mlp_ratio=self.mlp_ratio,
                 qkv_bias=self.qkv_bias,
                 qk_scale=self.qk_scale,
                 drop_rate=self.drop_rate,
                 attn_drop=self.attn_drop,
-                drop_path=self.drop_path[i] if isinstance(self.drop_path, list) else self.drop_path,
+                drop_path=self.drop_path[i]
+                if isinstance(self.drop_path, list)
+                else self.drop_path,
                 norm_layer=self.norm_layer,
             )
             for i in range(self.depth)
         ]
 
         if self.downsample is not None:
-            self.downsample = self.downsample(
-                dim=self.dim, norm_layer=self.norm_layer
-            )
-        
+            self.downsample = self.downsample(dim=self.dim, norm_layer=self.norm_layer)
+
     def call(self, x, training=None, return_attention_maps=False):
         input_shape = ops.shape(x)
         batch_size, depth, height, width, channel = (
-            input_shape[0], 
+            input_shape[0],
             input_shape[1],
             input_shape[2],
             input_shape[3],
@@ -113,31 +110,24 @@ class BasicLayer(keras.Model):
         for block in self.blocks:
             if return_attention_maps:
                 x, attention_maps = block(
-                    x, 
+                    x,
                     self.attn_mask,
                     return_attention_maps=return_attention_maps,
-                    training=training
+                    training=training,
                 )
             else:
-                x = block(
-                    x, 
-                    self.attn_mask,
-                    training=training
-                )
+                x = block(x, self.attn_mask, training=training)
 
-        x = ops.reshape(
-            x, [batch_size, depth, height, width, -1]
-        )
- 
+        x = ops.reshape(x, [batch_size, depth, height, width, -1])
+
         if self.downsample is not None:
             x = self.downsample(x)
-            
+
         if return_attention_maps:
             return x, attention_maps
-            
+
         return x
-    
-    
+
     def get_config(self):
         config = super().get_config()
         config.update(
@@ -152,7 +142,7 @@ class BasicLayer(keras.Model):
                 "qk_scale": self.qk_scale,
                 "drop": self.drop,
                 "attn_drop": self.attn_drop,
-                "drop_path": self.drop_path
+                "drop_path": self.drop_path,
             }
         )
         return config

@@ -1,9 +1,9 @@
-
 from keras import layers
 
+
 class MLP(layers.Layer):
-    """ Multilayer perceptron."""
-    
+    """Multilayer perceptron."""
+
     def __init__(
         self,
         in_features,
@@ -18,7 +18,7 @@ class MLP(layers.Layer):
         self.hidden_features = hidden_features or in_features
         self.drop_rate = drop_rate
         self.act = act_layer
-        
+
     def build(self, input_shape):
         self.fc1 = layers.Dense(self.hidden_features)
         self.fc2 = layers.Dense(self.out_features)

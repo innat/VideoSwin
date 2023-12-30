@@ -1,4 +1,1 @@
-
-from .model import VideoSwinT
-from .model import VideoSwinS
-from .model import VideoSwinB
+from .model import VideoSwinB, VideoSwinS, VideoSwinT

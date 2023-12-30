@@ -1,6 +1,6 @@
 import keras
-from keras import layers
-from keras import ops
+from keras import layers, ops
+
 
 class DropPath(layers.Layer):
     def __init__(self, rate=0.5, seed=None, **kwargs):
@@ -8,7 +8,7 @@ class DropPath(layers.Layer):
         self.rate = rate
         self._seed_val = seed
         self.seed = keras.random.SeedGenerator(seed)
-        
+
     def call(self, x, training=None):
         if self.rate == 0.0 or not training:
             return x
