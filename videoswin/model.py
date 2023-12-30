@@ -11,7 +11,6 @@ from keras import ops
 
 from videoswin.layers import PatchEmbed3D
 from videoswin.layers import PatchMerging
-from videoswin.layers import AdaptiveAveragePooling3D
 from videoswin.blocks import BasicLayer
 
 
