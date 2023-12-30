@@ -25,21 +25,8 @@ class PatchEmbed3D(keras.Model):
         self.patch_size = patch_size
         self.in_chans = in_chans
         self.embed_dim = embed_dim
+        self.norm_layer = norm_layer
 
-        # layers
-        self.proj = layers.Conv3D(
-            embed_dim, 
-            kernel_size=patch_size,
-            strides=patch_size, 
-            name='embed_proj'
-        )
-        if norm_layer is not None:
-            self.norm = norm_layer(
-                axis=-1, epsilon=1e-5, name='embed_norm'
-            )
-        else:
-            self.norm = None
-        
     def build(self, input_shape):
         self.pads = [
             [0, 0], 
@@ -48,7 +35,20 @@ class PatchEmbed3D(keras.Model):
             self._compute_padding(input_shape[3], self.patch_size[2]),
             [0, 0]   
         ]
-        super().build(input_shape)
+        
+        # layers
+        self.proj = layers.Conv3D(
+            self.embed_dim, 
+            kernel_size=self.patch_size,
+            strides=self.patch_size, 
+            name='embed_proj'
+        )
+        if self.norm_layer is not None:
+            self.norm = self.norm_layer(
+                axis=-1, epsilon=1e-5, name='embed_norm'
+            )
+        else:
+            self.norm = None
 
     def _compute_padding(self, dim, patch_size):
         pad_amount = patch_size - (dim % patch_size)
@@ -57,7 +57,6 @@ class PatchEmbed3D(keras.Model):
         ]
         
     def call(self, x):
-        
         x = ops.pad(x, self.pads)
         x = self.proj(x)
         
