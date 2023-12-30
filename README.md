@@ -31,23 +31,30 @@ pip install -e .
 
 # Usage
 
-The **VideoSwin** checkpoints are available in both `SavedModel` and `H5` formats. The variants of this models are `tiny`, `small`, and `base`. Check this [release](https://github.com/innat/VideoSwin/releases/tag/v1.0) and [model zoo](https://github.com/innat/VideoSwin/blob/main/MODEL_ZOO.md) page to know details of it. Following are some hightlights.
+The **VideoSwin** checkpoints are available in both `SavedModel`,  `H5`, and `.weights.H5` formats. The variants of this models are `tiny`, `small`, and `base`. Check this [release](https://github.com/innat/VideoSwin/releases/tag/v1.0) and [model zoo](https://github.com/innat/VideoSwin/blob/main/MODEL_ZOO.md) page to know details of it. Following are some hightlights.
 
 **Inference**
 
 ```python
 from videoswin import VideoSwinT
 
+>>> import  os
+>>> import torch
+>>> os.environ["KERAS_BACKEND"] = "torch"
+>>> from videoswin import VideoSwinT
+
 >>> model = VideoSwinT(num_classes=400)
->>> model.load_weights('TFVideoSwinT_K400_IN1K_P244_W877_32x224.h5')
+>>> _ = model(torch.ones((1, 32, 224, 224, 3)))
+>>> model.load_weights('VideoSwinT_K400_IN1K_P244_W877_32x224.weights.h5')
+
 >>> container = read_video('sample.mp4')
 >>> frames = frame_sampling(container, num_frames=32)
->>> y = model(frames)
->>> y.shape
+>>> y_pred = model(frames)
+>>> y_pred.shape
 TensorShape([1, 400])
 
->>> probabilities = tf.nn.softmax(y_pred_tf)
->>> probabilities = probabilities.numpy().squeeze(0)
+>>> probabilities = torch.nn.functional.softmax(y_pred).detach().numpy()
+>>> probabilities = probabilities.squeeze(0)
 >>> confidences = {
     label_map_inv[i]: float(probabilities[i]) \
     for i in np.argsort(probabilities)[::-1]
