@@ -6,22 +6,24 @@ class DropPath(layers.Layer):
     def __init__(self, rate=0.5, seed=None, **kwargs):
         super().__init__(**kwargs)
         self.rate = rate
-        self.seed = seed
-
+        self._seed_val = seed
+        self.seed = keras.random.SeedGenerator(seed)
+        
     def call(self, x, training=None):
         if self.rate == 0.0 or not training:
             return x
         else:
-            keep_prob = 1 - self.rate
-            drop_map_shape = (ops.shape(x)[0],) + (1,) * (len(x.shape) - 1)
-            drop_map = keras.backend.random_bernoulli(
-                drop_map_shape, p=keep_prob, seed=self.seed, dtype=x.dtype
+            batch_size = x.shape[0] or ops.shape(x)[0]
+            drop_map_shape = (batch_size,) + (1,) * (len(x.shape) - 1)
+            drop_map = ops.cast(
+                keras.random.uniform(drop_map_shape, seed=self.seed) > self.rate,
+                x.dtype,
             )
-            x = x / keep_prob
+            x = x / (1.0 - self.rate)
             x = x * drop_map
             return x
 
     def get_config(self):
         config = super().get_config()
-        config.update({"rate": self.rate, "seed": self.seed})
+        config.update({"rate": self.rate, "seed": self._seed_val})
         return config
