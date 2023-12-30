@@ -3,7 +3,6 @@ from functools import partial
 
 import keras
 from keras import layers
-from keras import initializers
 from keras import ops
 
 from .swin_transformer import SwinTransformerBlock3D
@@ -37,7 +36,7 @@ class BasicLayer(keras.Model):
         mlp_ratio=4.,
         qkv_bias=False,
         qk_scale=None,
-        drop=0.,
+        drop_rate=0.,
         attn_drop=0.,
         drop_path=0.,
         norm_layer=partial(layers.LayerNormalization, epsilon=1e-05),
@@ -45,32 +44,19 @@ class BasicLayer(keras.Model):
         **kwargs
     ):
         super().__init__(**kwargs)
+        self.dim = dim
+        self.num_heads = num_heads
         self.window_size = window_size
+        self.mlp_ratio = mlp_ratio
         self.shift_size = tuple([i // 2 for i in window_size])
         self.depth = depth
-
-        # build blocks
-        self.blocks = [
-            SwinTransformerBlock3D(
-                dim=dim,
-                num_heads=num_heads,
-                window_size=window_size,
-                shift_size=(0,0,0) if (i % 2 == 0) else self.shift_size,
-                mlp_ratio=mlp_ratio,
-                qkv_bias=qkv_bias,
-                qk_scale=qk_scale,
-                drop=drop,
-                attn_drop=attn_drop,
-                drop_path=drop_path[i] if isinstance(drop_path, list) else drop_path,
-                norm_layer=norm_layer,
-            )
-            for i in range(depth)]
-
+        self.qkv_bias = qkv_bias
+        self.qk_scale = qk_scale
+        self.drop_rate = drop_rate
+        self.attn_drop = attn_drop
+        self.drop_path = drop_path
+        self.norm_layer = norm_layer
         self.downsample = downsample
-        if self.downsample is not None:
-            self.downsample = downsample(
-                dim=dim, norm_layer=norm_layer
-            )
     
     def compute_dim_padded(self, input_dim, window_dim_size):
         input_dim = ops.cast(input_dim, dtype="float32")
@@ -84,18 +70,39 @@ class BasicLayer(keras.Model):
         window_size, shift_size = get_window_size(
             input_shape[1:-1], self.window_size, self.shift_size
         )
-        Dp = self.compute_dim_padded(input_shape[1], window_size[0])
-        Hp = self.compute_dim_padded(input_shape[2], window_size[1])
-        Wp = self.compute_dim_padded(input_shape[3], window_size[2])
+        depth_p  = self.compute_dim_padded(input_shape[1], window_size[0])
+        height_p = self.compute_dim_padded(input_shape[2], window_size[1])
+        width_p  = self.compute_dim_padded(input_shape[3], window_size[2])
         self.attn_mask = compute_mask(
-            Dp, Hp, Wp, window_size, shift_size
+            depth_p, height_p, width_p, window_size, shift_size
         )
-        super().build(input_shape)
         
+        # build blocks
+        self.blocks = [
+            SwinTransformerBlock3D(
+                dim=self.dim,
+                num_heads=self.num_heads,
+                window_size=self.window_size,
+                shift_size=(0,0,0) if (i % 2 == 0) else self.shift_size,
+                mlp_ratio=self.mlp_ratio,
+                qkv_bias=self.qkv_bias,
+                qk_scale=self.qk_scale,
+                drop_rate=self.drop_rate,
+                attn_drop=self.attn_drop,
+                drop_path=self.drop_path[i] if isinstance(self.drop_path, list) else self.drop_path,
+                norm_layer=self.norm_layer,
+            )
+            for i in range(self.depth)
+        ]
 
-    def call(self, x, training=None, return_attns=False):
+        if self.downsample is not None:
+            self.downsample = self.downsample(
+                dim=self.dim, norm_layer=self.norm_layer
+            )
+        
+    def call(self, x, training=None, return_attention_maps=False):
         input_shape = ops.shape(x)
-        B,D,H,W,C = (
+        batch_size, depth, height, width, channel = (
             input_shape[0], 
             input_shape[1],
             input_shape[2],
@@ -103,29 +110,49 @@ class BasicLayer(keras.Model):
             input_shape[4],
         )
 
-        for blk in self.blocks:
-            if return_attns:
-                x, attn_scores = blk(
+        for block in self.blocks:
+            if return_attention_maps:
+                x, attention_maps = block(
                     x, 
                     self.attn_mask,
-                    return_attns=return_attns,
+                    return_attention_maps=return_attention_maps,
                     training=training
                 )
             else:
-                x = blk(
+                x = block(
                     x, 
                     self.attn_mask,
                     training=training
                 )
-            
+
         x = ops.reshape(
-            x, [B, D, H, W, -1]
+            x, [batch_size, depth, height, width, -1]
         )
  
         if self.downsample is not None:
             x = self.downsample(x)
             
-        if return_attns:
-            return x, attn_scores
+        if return_attention_maps:
+            return x, attention_maps
             
         return x
+    
+    
+    def get_config(self):
+        config = super().get_config()
+        config.update(
+            {
+                "dim": self.dim,
+                "window_size": self.window_size,
+                "num_heads": self.num_heads,
+                "mlp_ratio": self.mlp_ratio,
+                "shift_size": self.shift_size,
+                "depth": self.depth,
+                "qkv_bias": self.qkv_bias,
+                "qk_scale": self.qk_scale,
+                "drop": self.drop,
+                "attn_drop": self.attn_drop,
+                "drop_path": self.drop_path
+            }
+        )
+        return config
