@@ -56,7 +56,6 @@ class SwinTransformer3D(keras.Model):
         norm_layer=layers.LayerNormalization,
         patch_norm=False,
         frozen_stages=-1,
-        in_channels=768,
         num_classes=400,
         **kwargs,
     ):
