@@ -33,13 +33,10 @@ class WindowAttention3D(keras.Model):
         self.num_heads = num_heads
         head_dim = dim // num_heads
         self.scale = qk_scale or head_dim ** -0.5
+        self.qkv_bias = qkv_bias
+        self.attn_drop = attn_drop
+        self.proj_drop = proj_drop
 
-        # layers
-        self.qkv = layers.Dense(dim * 3, use_bias=qkv_bias)
-        self.attn_drop = layers.Dropout(attn_drop)
-        self.proj = layers.Dense(dim)
-        self.proj_drop = layers.Dropout(proj_drop)
-        
     def get_relative_position_index(self, window_depth, window_height, window_width):
         y_y, z_z, x_x = ops.meshgrid(
             range(window_width), range(window_depth), range(window_height)
@@ -69,51 +66,61 @@ class WindowAttention3D(keras.Model):
         self.relative_position_index = self.get_relative_position_index(
             self.window_size[0], self.window_size[1], self.window_size[2]
         )
-        super().build(input_shape)
+        
+        # layers
+        self.qkv = layers.Dense(self.dim * 3, use_bias=self.qkv_bias)
+        self.attn_drop = layers.Dropout(self.attn_drop)
+        self.proj = layers.Dense(self.dim)
+        self.proj_drop = layers.Dropout(self.proj_drop)
 
 
-    def call(self, x, mask=None, return_attns=False, training=None):
+    def call(self, x, mask=None, return_attention_maps=False, training=None):
         input_shape = ops.shape(x)
-        B_,N,C = (
+        batch_size, depth, channel = (
             input_shape[0],
             input_shape[1],
             input_shape[2],
         )
         
         qkv = self.qkv(x)
-        qkv = ops.reshape(qkv, [B_, N, 3, self.num_heads, C // self.num_heads])
+        qkv = ops.reshape(
+            qkv, [batch_size, depth, 3, self.num_heads, channel // self.num_heads]
+            )
         qkv = ops.transpose(qkv, [2, 0, 3, 1, 4])
         q, k, v = ops.split(qkv, 3, axis=0)
 
         q = ops.squeeze(q, axis=0) * self.scale
         k = ops.squeeze(k, axis=0)
         v = ops.squeeze(v, axis=0)
-        attn = ops.matmul(q, ops.transpose(k, [0, 1, 3, 2]))
+        attention_maps = ops.matmul(q, ops.transpose(k, [0, 1, 3, 2]))
         
         relative_position_bias = ops.take(
-            self.relative_position_bias_table, self.relative_position_index[:N, :N]
+            self.relative_position_bias_table, self.relative_position_index[:depth, :depth]
         )
-        relative_position_bias = ops.reshape(relative_position_bias, [N, N, -1])
+        relative_position_bias = ops.reshape(relative_position_bias, [depth, depth, -1])
         relative_position_bias = ops.transpose(relative_position_bias, [2, 0, 1])
-        attn = attn + relative_position_bias[None, ...]
+        attention_maps = attention_maps + relative_position_bias[None, ...]
   
         if mask is not None:
-            nW = ops.shape(mask)[0]
-            mask = ops.cast(mask, dtype=attn.dtype)
-            attn = ops.reshape(attn, [B_ // nW, nW, self.num_heads, N, N]) + mask[:, None, :, :]
-            attn = ops.reshape(attn, [-1, self.num_heads, N, N])
+            mask_size = ops.shape(mask)[0]
+            mask = ops.cast(mask, dtype=attention_maps.dtype)
+            attention_maps = ops.reshape(
+                attention_maps, [batch_size // mask_size, mask_size, self.num_heads, depth, depth]
+                ) 
+            attention_maps = attention_maps + mask[:, None, :, :]
+            attention_maps = ops.reshape(attention_maps, [-1, self.num_heads, depth, depth])
 
-        attn = keras.activations.softmax(attn, axis=-1)
-        attn = self.attn_drop(attn, training=training)
+        attention_maps = keras.activations.softmax(attention_maps, axis=-1)
+        attention_maps = self.attn_drop(attention_maps, training=training)
 
-        x = ops.matmul(attn, v)
+        x = ops.matmul(attention_maps, v)
         x = ops.transpose(x, [0, 2, 1, 3])
-        x = ops.reshape(x, [B_, N, C])
+        x = ops.reshape(x, [batch_size, depth, channel])
         x = self.proj(x)
         x = self.proj_drop(x, training=training)
         
-        if return_attns:
-            return x, attn
+        if return_attention_maps:
+            return x, attention_maps
         return x
     
     def get_config(self):
