@@ -25,10 +25,10 @@ class PatchMerging(layers.Layer):
         """ call function.
 
         Args:
-            x: Input feature, tensor size (B, D, H, W, C).
+            x: Input feature, tensor size (batch, depth, height, width, channel).
         """
         input_shape = ops.shape(x)
-        H,W = (
+        height, width = (
             input_shape[2],
             input_shape[3],
         )
@@ -37,8 +37,8 @@ class PatchMerging(layers.Layer):
         paddings = [
             [0, 0], 
             [0, 0], 
-            [0, ops.mod(H, 2)], 
-            [0, ops.mod(W, 2)], 
+            [0, ops.mod(height, 2)], 
+            [0, ops.mod(width, 2)], 
             [0, 0]
         ]
         x = ops.pad(x, paddings)
