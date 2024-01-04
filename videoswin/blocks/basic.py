@@ -62,6 +62,16 @@ class BasicLayer(keras.Model):
         return ops.cast(
             ops.ceil(input_dim / window_dim_size) * window_dim_size, "int32"
         )
+    
+    def compute_output_shape(self, input_shape):
+        window_size, _ = get_window_size(
+            input_shape[1:-1], self.window_size, self.shift_size
+        )
+        depth_p  = self.compute_dim_padded(input_shape[1], window_size[0])
+        height_p = self.compute_dim_padded(input_shape[2], window_size[1])
+        width_p  = self.compute_dim_padded(input_shape[3], window_size[2])
+        output_shape = (input_shape[0], depth_p, height_p, width_p, self.dim)
+        return output_shape
 
     def build(self, input_shape):
         window_size, shift_size = get_window_size(
