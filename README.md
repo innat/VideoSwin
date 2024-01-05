@@ -13,6 +13,7 @@ This is a unofficial `Keras` implementation of [Video Swin transformers](https:/
 
 ## News
 
+- **[05-01-2024]**: Video Swin now available in Kaggle Model with TF 2, Keras V3, TFLite, and ONNX formats. [Link](https://www.kaggle.com/models/ipythonx/videoswin/)
 - [24-11-2023]: [WIP https://github.com/innat/VideoSwin/pull/2] Supporting Keras V3 for TensorFlow, JAX, and PyTorch backend. 
 - **[24-10-2023]**: [Kinetics-400](https://www.deepmind.com/open-source/kinetics) test data set can be found on kaggle, [link](https://www.kaggle.com/datasets/ipythonx/k4testset/data?select=videos_val).
 - **[14-10-2023]**: VideoSwin integrated into [Huggingface Space](https://huggingface.co/spaces/innat/VideoSwin).
