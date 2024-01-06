@@ -1,5 +1,7 @@
 
-# VideoSwin Model Zoo
+# Video Swin Transformer Model Zoo
+
+Video Swin in `keras` can be used with multiple backends, i.e. `tensorflow`, `torch`, and `jax`.
 
 ## Note
 
@@ -57,4 +59,3 @@ np.testing.assert_allclose(x, y, 1e-4, 1e-4)
 np.testing.assert_allclose(x, y, 1e-5, 1e-5)
 # OK
 ```
-

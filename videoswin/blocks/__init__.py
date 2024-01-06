@@ -1,3 +1,2 @@
-
-from .swin_transformer import TFSwinTransformerBlock3D
-from .basic import TFBasicLayer
+from .basic import BasicLayer
+from .swin_transformer import SwinTransformerBlock3D
