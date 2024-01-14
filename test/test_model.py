@@ -83,6 +83,6 @@ class TestVideoSwin(TestCase):
     @pytest.mark.extra_large
     def test_call_with_variable_shape(self, input_shape):
         model = VideoSwinT(num_classes=400)
-        x_inp = ops.ones(shape=(1, *input_shape, 3))
+        x_inp = ops.ones(shape=(1, *input_shape))
         x_out = model(x_inp)
         self.assertEqual(x_out.shape, (1, 400))
