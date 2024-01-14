@@ -1,11 +1,10 @@
 import os
-
-import keras
-import numpy as np
 import pytest
+import numpy as np
 from absl.testing import parameterized
-from base import TestCase
+
 from keras import ops
+from base import TestCase
 
 from videoswin import VideoSwinT
 
