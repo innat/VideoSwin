@@ -37,8 +37,8 @@ class SwinTransformerBlock3D(keras.Model):
         drop_rate: Optional[float] = 0.0,
         attn_drop: Optional[float] = 0.0,
         drop_path: Optional[float] = 0.0,
-        act_layer: Type(layers.Layer) = layers.Activation("gelu"),
-        norm_layer: Type(layers.Layer) = layers.LayerNormalization,
+        act_layer: Type[layers.Layer] = layers.Activation("gelu"),
+        norm_layer: Type[layers.Layer] = layers.LayerNormalization,
         **kwargs
     ):
         super().__init__(**kwargs)

@@ -7,17 +7,15 @@ class PatchEmbed3D(keras.Model):
 
     Args:
         patch_size (int): Patch token size. Default: (2,4,4).
-        in_chans (int): Number of input video channels. Default: 3.
         embed_dim (int): Number of linear projection output channels. Default: 96.
         norm_layer (keras.layers, optional): Normalization layer. Default: None
     """
 
     def __init__(
-        self, patch_size=(2, 4, 4), in_chans=3, embed_dim=96, norm_layer=None, **kwargs
+        self, patch_size=(2, 4, 4), embed_dim=96, norm_layer=None, **kwargs
     ):
         super().__init__(**kwargs)
         self.patch_size = patch_size
-        self.in_chans = in_chans
         self.embed_dim = embed_dim
         self.norm_layer = norm_layer
 

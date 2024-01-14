@@ -24,7 +24,6 @@ class SwinTransformer3D(keras.Model):
 
     Args:
         patch_size (int | tuple(int)): Patch size. Default: (4,4,4).
-        in_chans (int): Number of input image channels. Default: 3.
         embed_dim (int): Number of linear projection output channels. Default: 96.
         depths (tuple[int]): Depths of each Swin Transformer stage.
         num_heads (tuple[int]): Number of attention head of each stage.
@@ -44,7 +43,6 @@ class SwinTransformer3D(keras.Model):
     def __init__(
         self,
         patch_size: Union[int, Tuple[int, int, int]] = (4, 4, 4),
-        in_chans: int = 3,
         embed_dim: int = 96,
         depths: List[int] = [2, 2, 6, 2],
         num_heads: List[int] = [3, 6, 12, 24],
@@ -57,19 +55,16 @@ class SwinTransformer3D(keras.Model):
         drop_path_rate: float = 0.2,
         norm_layer: Type[layers.Layer] = layers.LayerNormalization,
         patch_norm: bool = False,
-        frozen_stages: int = -1,
         num_classes: int = 400,
         **kwargs,
-    ):
+    ) -> keras.Model:
         super().__init__(**kwargs)
         self.num_layers = len(depths)
         self.embed_dim = embed_dim
         self.patch_norm = patch_norm
-        self.frozen_stages = frozen_stages
         self.window_size = window_size
         self.patch_size = patch_size
         self.mlp_ratio = mlp_ratio
-        self.in_chans = in_chans
         self.norm_layer = norm_layer
         self.drop_rate = drop_rate
         self.drop_path_rate = drop_path_rate
@@ -84,7 +79,6 @@ class SwinTransformer3D(keras.Model):
         # split image into non-overlapping patches
         self.patch_embed = PatchEmbed3D(
             patch_size=self.patch_size,
-            in_chans=self.in_chans,
             embed_dim=self.embed_dim,
             norm_layer=self.norm_layer if self.patch_norm else None,
             name="PatchEmbed3D",
