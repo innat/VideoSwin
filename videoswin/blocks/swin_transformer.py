@@ -191,3 +191,22 @@ class SwinTransformerBlock3D(keras.Model):
             return x, attention_maps
 
         return x
+    
+    def get_config(self):
+        config = super().get_config()
+        config.update(
+            {
+                "dim": self.dim,
+                "window_size": self.num_heads,
+                "num_heads": self.window_size,
+                "shift_size": self.shift_size,
+                "mlp_ratio": self.mlp_ratio,
+                "qkv_bias": self.qkv_bias,
+                "qk_scale": self.qk_scale,
+                "attn_drop": self.attn_drop,
+                "drop_rate": self.drop_rate, 
+                "drop_path": self.drop_path,
+                "mlp_hidden_dim": self.mlp_hidden_dim
+            }
+        )
+        return config

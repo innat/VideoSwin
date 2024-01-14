@@ -45,3 +45,12 @@ class PatchMerging(layers.Layer):
         x = self.norm(x)
         x = self.reduction(x)
         return x
+    
+    def get_config(self):
+        config = super().get_config()
+        config.update(
+            {
+                "dim": self.dim,
+            }
+        )
+        return config

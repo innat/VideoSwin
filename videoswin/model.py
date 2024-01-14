@@ -146,6 +146,27 @@ class SwinTransformer3D(keras.Model):
     def build_graph(self):
         x = keras.Input(shape=self.build_shape, name="input_graph")
         return keras.Model(inputs=[x], outputs=self.call(x))
+    
+    def get_config(self):
+        config = super().get_config()
+        config.update(
+            {
+                "embed_dim": self.embed_dim,
+                "patch_norm": self.patch_norm,
+                "window_size": self.window_size,
+                "patch_size": self.patch_size,
+                "mlp_ratio": self.mlp_ratio,
+                "drop_rate": self.drop_rate,
+                "drop_path_rate": self.drop_path_rate,
+                "attn_drop_rate": self.attn_drop_rate,
+                "depths": self.depths,
+                "num_heads": self.num_heads,
+                "qkv_bias": self.qkv_bias,
+                "qk_scale": self.qk_scale,
+                "num_classes": self.num_classes,
+            }
+        )
+        return config
 
 
 def VideoSwinT(num_classes, window_size=(8, 7, 7), drop_path_rate=0.2, **kwargs):
