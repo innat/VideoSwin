@@ -18,8 +18,6 @@ class MLP(layers.Layer):
         self.hidden_features = hidden_features or in_features
         self.drop_rate = drop_rate
         self.act = act_layer
-
-    def build(self, input_shape):
         self.fc1 = layers.Dense(self.hidden_features)
         self.fc2 = layers.Dense(self.out_features)
         self.dropout = layers.Dropout(self.drop_rate)
@@ -31,3 +29,14 @@ class MLP(layers.Layer):
         x = self.fc2(x)
         x = self.dropout(x, training=training)
         return x
+    
+    def get_config(self):
+        config = super().get_config()
+        config.update(
+            {
+                "out_features": self.out_features, 
+                "hidden_features": self.hidden_features,
+                "drop_rate": self.drop_rate,
+            }
+        )
+        return config

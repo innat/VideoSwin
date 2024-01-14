@@ -15,10 +15,10 @@ class TestVideoSwin(TestCase):
     def setUp(self):
         self.input_batch = ops.ones(shape=(1, 32, 224, 224, 3))
         self.expected_shapes = {
-            "BasicLayer1_attention_maps": (128, 3, 392, 392),
-            "BasicLayer2_attention_maps": (32, 6, 392, 392),
-            "BasicLayer3_attention_maps": (8, 12, 392, 392),
-            "BasicLayer4_attention_maps": (2, 24, 392, 392),
+            "basiclayer1_attention_maps": (128, 3, 392, 392),
+            "basiclayer2_attention_maps": (32, 6, 392, 392),
+            "basiclayer3_attention_maps": (8, 12, 392, 392),
+            "basiclayer4_attention_maps": (2, 24, 392, 392),
         }
 
     @parameterized.named_parameters(

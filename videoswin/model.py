@@ -129,7 +129,7 @@ class SwinTransformer3D(keras.Model):
                 x, attention_maps = layer(
                     x, return_attention_maps=return_attention_maps, training=training
                 )
-                attention_maps_dict[f"{layer.name}_attention_maps"] = attention_maps
+                attention_maps_dict[f"{layer.name.lower()}_attention_maps"] = attention_maps
             else:
                 x = layer(x, training=training)
 
