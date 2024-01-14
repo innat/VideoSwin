@@ -45,7 +45,7 @@ class PatchEmbed3D(keras.Model):
     def _compute_padding(self, dim, patch_size):
         pad_amount = patch_size - (dim % patch_size)
         return [0, pad_amount if pad_amount != patch_size else 0]
-    
+
     def compute_output_shape(self, input_shape):
         spatial_dims = [
             (dim - self.patch_size[i]) // self.patch_size[i] + 1

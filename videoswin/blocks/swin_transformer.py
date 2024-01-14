@@ -1,3 +1,5 @@
+from typing import Optional, Tuple, Type
+
 import keras
 from keras import layers, ops
 
@@ -25,18 +27,18 @@ class SwinTransformerBlock3D(keras.Model):
 
     def __init__(
         self,
-        dim,
-        num_heads,
-        window_size=(2, 7, 7),
-        shift_size=(0, 0, 0),
-        mlp_ratio=4.0,
-        qkv_bias=True,
-        qk_scale=None,
-        drop_rate=0.0,
-        attn_drop=0.0,
-        drop_path=0.0,
-        act_layer=layers.Activation("gelu"),
-        norm_layer=layers.LayerNormalization,
+        dim: float,
+        num_heads: float,
+        window_size: Tuple[int, int, int] = (2, 7, 7),
+        shift_size: Tuple[int, int, int] = (0, 0, 0),
+        mlp_ratio: float = 4.0,
+        qkv_bias: Optional[bool] = True,
+        qk_scale: Optional[float] = None,
+        drop_rate: Optional[float] = 0.0,
+        attn_drop: Optional[float] = 0.0,
+        drop_path: Optional[float] = 0.0,
+        act_layer: Type(layers.Layer) = layers.Activation("gelu"),
+        norm_layer: Type(layers.Layer) = layers.LayerNormalization,
         **kwargs
     ):
         super().__init__(**kwargs)

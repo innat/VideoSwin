@@ -36,7 +36,9 @@ def window_partition(x, window_size):
     )
 
     x = ops.transpose(x, [0, 1, 3, 5, 2, 4, 6, 7])
-    windows = ops.reshape(x, [-1, window_size[0] * window_size[1] * window_size[2], channel])
+    windows = ops.reshape(
+        x, [-1, window_size[0] * window_size[1] * window_size[2], channel]
+    )
 
     return windows
 

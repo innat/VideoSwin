@@ -7,6 +7,8 @@ import numpy as np
 warnings.simplefilter(action="ignore")
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
+from typing import List, Optional, Tuple, Type, Union
+
 import keras
 from keras import layers
 
@@ -41,22 +43,22 @@ class SwinTransformer3D(keras.Model):
 
     def __init__(
         self,
-        patch_size=(4, 4, 4),
-        in_chans=3,
-        embed_dim=96,
-        depths=[2, 2, 6, 2],
-        num_heads=[3, 6, 12, 24],
-        window_size=(2, 7, 7),
-        mlp_ratio=4.0,
-        qkv_bias=True,
-        qk_scale=None,
-        drop_rate=0.0,
-        attn_drop_rate=0.0,
-        drop_path_rate=0.2,
-        norm_layer=layers.LayerNormalization,
-        patch_norm=False,
-        frozen_stages=-1,
-        num_classes=400,
+        patch_size: Union[int, Tuple[int, int, int]] = (4, 4, 4),
+        in_chans: int = 3,
+        embed_dim: int = 96,
+        depths: List[int] = [2, 2, 6, 2],
+        num_heads: List[int] = [3, 6, 12, 24],
+        window_size: List[int] = (2, 7, 7),
+        mlp_ratio: float = 4.0,
+        qkv_bias: bool = True,
+        qk_scale: Optional[float] = None,
+        drop_rate: float = 0.0,
+        attn_drop_rate: float = 0.0,
+        drop_path_rate: float = 0.2,
+        norm_layer: Type[layers.Layer] = layers.LayerNormalization,
+        patch_norm: bool = False,
+        frozen_stages: int = -1,
+        num_classes: int = 400,
         **kwargs,
     ):
         super().__init__(**kwargs)

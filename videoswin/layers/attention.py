@@ -1,3 +1,5 @@
+from typing import Optional, Tuple
+
 import keras
 from keras import layers, ops
 
@@ -17,13 +19,13 @@ class WindowAttention3D(keras.Model):
 
     def __init__(
         self,
-        dim,
-        window_size,
-        num_heads,
-        qkv_bias=True,
-        qk_scale=None,
-        attn_drop=0.0,
-        proj_drop=0.0,
+        dim: int,
+        window_size: Tuple[int, int, int],
+        num_heads: int,
+        qkv_bias: Optional[bool] = True,
+        qk_scale: Optional[float] = None,
+        attn_drop: Optional[float] = 0.0,
+        proj_drop: Optional[float] = 0.0,
         **kwargs
     ):
         super().__init__(**kwargs)

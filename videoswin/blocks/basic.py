@@ -1,4 +1,5 @@
 from functools import partial
+from typing import Optional, Tuple, Type
 
 import keras
 from keras import layers, ops
@@ -27,18 +28,20 @@ class BasicLayer(keras.Model):
 
     def __init__(
         self,
-        dim,
-        depth,
-        num_heads,
-        window_size=(1, 7, 7),
-        mlp_ratio=4.0,
-        qkv_bias=False,
-        qk_scale=None,
-        drop_rate=0.0,
-        attn_drop=0.0,
-        drop_path=0.0,
-        norm_layer=partial(layers.LayerNormalization, epsilon=1e-05),
-        downsample=None,
+        dim: int,
+        depth: int,
+        num_heads: int,
+        window_size: Tuple[int, int, int] = (1, 7, 7),
+        mlp_ratio: float = 4.0,
+        qkv_bias: bool = False,
+        qk_scale: Optional[float] = None,
+        drop_rate: float = 0.0,
+        attn_drop: float = 0.0,
+        drop_path: float = 0.0,
+        norm_layer: Type[layers.Layer] = partial(
+            layers.LayerNormalization, epsilon=1e-05
+        ),
+        downsample: Optional[Type[layers.Layer]] = None,
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -62,14 +65,14 @@ class BasicLayer(keras.Model):
         return ops.cast(
             ops.ceil(input_dim / window_dim_size) * window_dim_size, "int32"
         )
-    
+
     def compute_output_shape(self, input_shape):
         window_size, _ = get_window_size(
             input_shape[1:-1], self.window_size, self.shift_size
         )
-        depth_p  = self.compute_dim_padded(input_shape[1], window_size[0])
+        depth_p = self.compute_dim_padded(input_shape[1], window_size[0])
         height_p = self.compute_dim_padded(input_shape[2], window_size[1])
-        width_p  = self.compute_dim_padded(input_shape[3], window_size[2])
+        width_p = self.compute_dim_padded(input_shape[3], window_size[2])
         output_shape = (input_shape[0], depth_p, height_p, width_p, self.dim)
         return output_shape
 
