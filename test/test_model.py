@@ -1,3 +1,5 @@
+# noqa: E501
+
 import os
 import pytest
 import numpy as np
