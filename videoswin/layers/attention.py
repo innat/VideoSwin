@@ -139,6 +139,10 @@ class WindowAttention3D(keras.Model):
                 "dim": self.dim,
                 "window_size": self.window_size,
                 "num_heads": self.num_heads,
+                "scale": self.scale,
+                "qkv_bias": self.qkv_bias,
+                "attn_drop": self.attn_drop,
+                "proj_drop": self.proj_drop,
             }
         )
         return config
