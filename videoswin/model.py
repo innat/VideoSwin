@@ -46,7 +46,7 @@ class SwinTransformer3D(keras.Model):
         embed_dim: int = 96,
         depths: List[int] = [2, 2, 6, 2],
         num_heads: List[int] = [3, 6, 12, 24],
-        window_size: List[int] = (2, 7, 7),
+        window_size: List[int] = [2, 7, 7],
         mlp_ratio: float = 4.0,
         qkv_bias: bool = True,
         qk_scale: Optional[float] = None,
