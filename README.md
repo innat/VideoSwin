@@ -138,7 +138,7 @@ In the training phase, the video swin mdoels are initialized with the pretrained
 
 # TODO
 - [x] Custom fine-tuning code.
-- [ ] Publish on TF-Hub.
+- [x] Publish on TF-Hub or Kaggle Model.
 - [ ] Support `Keras V3` to support multi-framework backend.
 
 ##  Citation
