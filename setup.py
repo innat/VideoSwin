@@ -14,7 +14,7 @@ setup(
     keywords=["deep learning", "image retrieval", "image recognition"],
     install_requires=[
         "opencv-python>=4.1.2",
-        "keras-nightly",
+        "keras",
         "tensorflow-datasets",
     ],
     extras_require={
@@ -23,9 +23,7 @@ setup(
             "isort",
             "black[jupyter]",
             "pytest",
-            "pycocotools",
         ],
-        "examples": ["tensorflow_datasets", "matplotlib"],
     },
     python_requires=">=3.9",
     classifiers=[
