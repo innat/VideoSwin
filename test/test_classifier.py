@@ -75,7 +75,3 @@ class VideoClassifierTest(TestCase):
             ops.convert_to_numpy(model_output),
             ops.convert_to_numpy(restored_output),
         )
-
-
-if __name__ == "__main__":
-    tf.test.main()

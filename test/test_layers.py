@@ -77,7 +77,3 @@ class TestVideoSwinPatchMerging(TestCase):
             2 * 32,
         )
         self.assertEqual(output_shape, expected_shape)
-
-
-if __name__ == "__main__":
-    tf.test.main()

@@ -14,14 +14,12 @@ class TestVideoSwinSBackbone(TestCase):
 
     @pytest.mark.large
     def test_call(self):
-        model = VideoSwinBackbone(include_rescaling=True, input_shape=(8, 256, 256, 3))
-        x = np.ones((1, 8, 256, 256, 3))
-        print(model.summary())
+        model = VideoSwinBackbone(include_rescaling=True, input_shape=(8, 224, 224, 3))
+        x = np.ones((1, 8, 224, 224, 3))
         x_out = model(x)
-        print(x_out.shape)
         x_out = ops.convert_to_numpy(x_out)
         num_parameters = sum(np.prod(tuple(x.shape)) for x in model.trainable_variables)
-        self.assertEqual(x_out.shape, (1, 4, 8, 8, 768))
+        self.assertEqual(x_out.shape, (1, 4, 7, 7, 768))
         self.assertEqual(num_parameters, 27_663_894)
 
     @pytest.mark.extra_large
@@ -64,7 +62,3 @@ class TestVideoSwinSBackbone(TestCase):
         y = np.zeros((1, 48, 3, 3, 768))
         model.compile(optimizer="adam", loss="mse", metrics=["mse"])
         model.fit(x, y, epochs=1)
-
-
-if __name__ == "__main__":
-    tf.test.main()
