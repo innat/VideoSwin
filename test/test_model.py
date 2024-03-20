@@ -1,30 +1,24 @@
-# noqa: E501
-
 import os
 
+import keras
 import numpy as np
 import pytest
+import tensorflow as tf
 from absl.testing import parameterized
 from base import TestCase
-import tensorflow as tf
 from keras import ops
-import keras
-from videoswin.model import VideoSwinBackbone
-from videoswin.model import VideoSwinT
+
+from videoswin.model import VideoSwinBackbone, VideoSwinT
 
 
 class TestVideoSwinSBackbone(TestCase):
 
     @pytest.mark.large
     def test_call(self):
-        model = VideoSwinBackbone(  # TODO: replace with aliases
-            include_rescaling=True, input_shape=(8, 256, 256, 3)
-        )
+        model = VideoSwinBackbone(include_rescaling=True, input_shape=(8, 256, 256, 3))
         x = np.ones((1, 8, 256, 256, 3))
         x_out = ops.convert_to_numpy(model(x))
-        num_parameters = sum(
-            np.prod(tuple(x.shape)) for x in model.trainable_variables
-        )
+        num_parameters = sum(np.prod(tuple(x.shape)) for x in model.trainable_variables)
         self.assertEqual(x_out.shape, (1, 4, 8, 8, 768))
         self.assertEqual(num_parameters, 27_663_894)
 
@@ -51,9 +45,7 @@ class TestVideoSwinSBackbone(TestCase):
     @pytest.mark.extra_large
     def test_can_run_in_mixed_precision(self):
         keras.mixed_precision.set_global_policy("mixed_float16")
-        model = VideoSwinBackbone(
-            include_rescaling=False, input_shape=(8, 224, 224, 3)
-        )
+        model = VideoSwinBackbone(include_rescaling=False, input_shape=(8, 224, 224, 3))
         x = np.ones((1, 8, 224, 224, 3))
         y = np.zeros((1, 4, 7, 7, 768))
         model.compile(optimizer="adam", loss="mse", metrics=["mse"])
@@ -107,9 +99,7 @@ class VideoClassifierTest(TestCase):
         )
         model.fit(self.dataset)
 
-    @parameterized.named_parameters(
-        ("avg_pooling", "avg"), ("max_pooling", "max")
-    )
+    @parameterized.named_parameters(("avg_pooling", "avg"), ("max_pooling", "max"))
     def test_pooling_arg_call(self, pooling):
         model = VideoSwinT(
             backbone=VideoSwinBackbone(
@@ -142,3 +132,7 @@ class VideoClassifierTest(TestCase):
             ops.convert_to_numpy(model_output),
             ops.convert_to_numpy(restored_output),
         )
+
+
+if __name__ == "__main__":
+    tf.test.main()

@@ -1,11 +1,13 @@
-
+import tensorflow as tf
+from base import TestCase
 from keras import ops
 
-from videoswin.layers import VideoSwinPatchingAndEmbedding
-from videoswin.layers import VideoSwinPatchMerging
-from videoswin.layers import VideoSwinWindowAttention
+from videoswin.layers import (
+    VideoSwinPatchingAndEmbedding,
+    VideoSwinPatchMerging,
+    VideoSwinWindowAttention,
+)
 
-from base import TestCase
 
 class TestVideoSwinPatchingAndEmbedding(TestCase):
     def test_patch_embedding_compute_output_shape(self):
@@ -75,3 +77,7 @@ class TestVideoSwinPatchMerging(TestCase):
             2 * 32,
         )
         self.assertEqual(output_shape, expected_shape)
+
+
+if __name__ == "__main__":
+    tf.test.main()

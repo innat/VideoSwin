@@ -9,10 +9,11 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 import keras
 from keras import layers
-from .utils import parse_model_inputs
 
 from videoswin.blocks import VideoSwinBasicLayer
 from videoswin.layers import VideoSwinPatchingAndEmbedding, VideoSwinPatchMerging
+
+from .utils import parse_model_inputs
 
 
 @keras.utils.register_keras_serializable(package="swin.transformer.3d")
