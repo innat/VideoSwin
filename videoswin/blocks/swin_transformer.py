@@ -1,134 +1,166 @@
-from typing import Optional, Tuple, Type
 
 import keras
 from keras import layers, ops
 
-from ..layers import MLP, DropPath, WindowAttention3D
+from ..layers import MLP, DropPath, VideoSwinWindowAttention
 from ..utils import get_window_size, window_partition, window_reverse
 
 
-class SwinTransformerBlock3D(keras.Model):
-    """Swin Transformer Block.
+class VideoSwinTransformerBlock(keras.Model):
+    """Video Swin Transformer Block.
 
     Args:
-        dim (int): Number of input channels.
+        input_dim (int): Number of feature channels.
         num_heads (int): Number of attention heads.
-        window_size (tuple[int]): Window size.
-        shift_size (tuple[int]): Shift size for SW-MSA.
+        window_size (tuple[int]): Local window size. Default: (2, 7, 7)
+        shift_size (tuple[int]): Shift size for SW-MSA. Default: (0, 0, 0)
         mlp_ratio (float): Ratio of mlp hidden dim to embedding dim.
-        qkv_bias (bool, optional): If True, add a learnable bias to query, key, value. Default: True
+            Default: 4.0
+        qkv_bias (bool, optional): If True, add a learnable bias to query, key, value.
+            Default: True
         qk_scale (float | None, optional): Override default qk scale of head_dim ** -0.5 if set.
+            Default: None
         drop (float, optional): Dropout rate. Default: 0.0
-        attn_drop (float, optional): Attention dropout rate. Default: 0.0
+        attn_drop (float, optionalc): Attention dropout rate. Default: 0.0
         drop_path (float, optional): Stochastic depth rate. Default: 0.0
         act_layer (keras.layers.Activation, optional): Activation layer. Default: gelu
-        norm_layer (keras.layers, optional): Normalization layer.  Default: LayerNormalization
-    """
+        norm_layer (keras.layers, optional): Normalization layer.
+            Default: LayerNormalization
+
+    References:
+        - [Video Swin Transformer](https://arxiv.org/abs/2106.13230)
+        - [Video Swin Transformer GitHub](https://github.com/SwinTransformer/Video-Swin-Transformer)
+    """  # noqa: E501
 
     def __init__(
         self,
-        dim: float,
-        num_heads: float,
-        window_size: Tuple[int, int, int] = (2, 7, 7),
-        shift_size: Tuple[int, int, int] = (0, 0, 0),
-        mlp_ratio: float = 4.0,
-        qkv_bias: Optional[bool] = True,
-        qk_scale: Optional[float] = None,
-        drop_rate: Optional[float] = 0.0,
-        attn_drop: Optional[float] = 0.0,
-        drop_path: Optional[float] = 0.0,
-        act_layer: Type[layers.Layer] = layers.Activation("gelu"),
-        norm_layer: Type[layers.Layer] = layers.LayerNormalization,
-        **kwargs
+        input_dim,
+        num_heads,
+        window_size=(2, 7, 7),
+        shift_size=(0, 0, 0),
+        mlp_ratio=4.0,
+        qkv_bias=True,
+        qk_scale=None,
+        drop_rate=0.0,
+        attn_drop_rate=0.0,
+        drop_path_rate=0.0,
+        activation="gelu",
+        norm_layer=layers.LayerNormalization,
+        **kwargs,
     ):
         super().__init__(**kwargs)
-        self.dim = dim
+        # variables
+        self.input_dim = input_dim
         self.num_heads = num_heads
         self.window_size = window_size
         self.shift_size = shift_size
         self.mlp_ratio = mlp_ratio
         self.qkv_bias = qkv_bias
         self.qk_scale = qk_scale
-        self.attn_drop = attn_drop
         self.drop_rate = drop_rate
-        self.drop_path = drop_path
-        self.mlp_hidden_dim = int(dim * mlp_ratio)
-        self.act_layer = act_layer
+        self.attn_drop_rate = attn_drop_rate
+        self.drop_path_rate = drop_path_rate
+        self.mlp_hidden_dim = int(input_dim * mlp_ratio)
         self.norm_layer = norm_layer
+        self._activation_identifier = activation
 
-        assert (
-            0 <= self.shift_size[0] < self.window_size[0]
-        ), "shift_size must in 0-window_size"
-        assert (
-            0 <= self.shift_size[1] < self.window_size[1]
-        ), "shift_size must in 0-window_size"
-        assert (
-            0 <= self.shift_size[2] < self.window_size[2]
-        ), "shift_size must in 0-window_size"
+        for i, (shift, window) in enumerate(
+            zip(self.shift_size, self.window_size)
+        ):
+            if not (0 <= shift < window):
+                raise ValueError(
+                    f"shift_size[{i}] must be in the range 0 to less than "
+                    f"window_size[{i}], but got shift_size[{i}]={shift} "
+                    f"and window_size[{i}]={window}."
+                )
 
     def build(self, input_shape):
         self.window_size, self.shift_size = get_window_size(
             input_shape[1:-1], self.window_size, self.shift_size
         )
+
+        self.apply_cyclic_shift = False
         if any(i > 0 for i in self.shift_size):
-            self.roll = True
-        else:
-            self.roll = False
+            self.apply_cyclic_shift = True
 
         # layers
+        self.drop_path = (
+            DropPath(self.drop_path_rate)
+            if self.drop_path_rate > 0.0
+            else layers.Identity()
+        )
+
         self.norm1 = self.norm_layer(axis=-1, epsilon=1e-05)
-        self.attn = WindowAttention3D(
-            self.dim,
+        self.norm1.build(input_shape)
+
+        self.attn = VideoSwinWindowAttention(
+            self.input_dim,
             window_size=self.window_size,
             num_heads=self.num_heads,
             qkv_bias=self.qkv_bias,
             qk_scale=self.qk_scale,
-            attn_drop=self.attn_drop,
-            proj_drop=self.drop_rate,
+            attn_drop_rate=self.attn_drop_rate,
+            proj_drop_rate=self.drop_rate,
         )
-        self.drop_path = (
-            DropPath(self.drop_path) if self.drop_path > 0.0 else layers.Identity()
-        )
+        self.attn.build((None, None, self.input_dim))
+
         self.norm2 = self.norm_layer(axis=-1, epsilon=1e-05)
+        self.norm2.build((*input_shape[:-1], self.input_dim))
+
         self.mlp = MLP(
-            in_features=self.dim,
-            hidden_features=self.mlp_hidden_dim,
-            act_layer=self.act_layer,
+            output_dim=self.input_dim,
+            hidden_dim=self.mlp_hidden_dim,
+            activation=self._activation_identifier,
             drop_rate=self.drop_rate,
         )
+        self.mlp.build((*input_shape[:-1], self.input_dim))
 
-    def _forward(self, x, mask_matrix, return_attention_maps, training):
+        # compute padding if needed.
+        # pad input feature maps to multiples of window size.
+        _, depth, height, width, _ = input_shape
+        pad_l = pad_t = pad_d0 = 0
+        self.pad_d1 = ops.mod(-depth + self.window_size[0], self.window_size[0])
+        self.pad_b = ops.mod(-height + self.window_size[1], self.window_size[1])
+        self.pad_r = ops.mod(-width + self.window_size[2], self.window_size[2])
+        self.pads = [
+            [0, 0],
+            [pad_d0, self.pad_d1],
+            [pad_t, self.pad_b],
+            [pad_l, self.pad_r],
+            [0, 0],
+        ]
+        self.built = True
+
+    def first_forward(self, x, mask_matrix, training):
         input_shape = ops.shape(x)
-        batch_size, depth, height, width, channel = (
+        batch_size, depth, height, width, _ = (
             input_shape[0],
             input_shape[1],
             input_shape[2],
             input_shape[3],
             input_shape[4],
         )
-        window_size, shift_size = self.window_size, self.shift_size
         x = self.norm1(x)
 
-        # pad feature maps to multiples of window size
-        pad_l = pad_t = pad_d0 = 0
-        pad_d1 = ops.mod(-depth + window_size[0], window_size[0])
-        pad_b = ops.mod(-height + window_size[1], window_size[1])
-        pad_r = ops.mod(-width + window_size[2], window_size[2])
-        paddings = [[0, 0], [pad_d0, pad_d1], [pad_t, pad_b], [pad_l, pad_r], [0, 0]]
-        x = ops.pad(x, paddings)
+        # apply padding if needed.
+        x = ops.pad(x, self.pads)
 
         input_shape = ops.shape(x)
-        depth_p, height_p, width_p = (
+        depth_pad, height_pad, width_pad = (
             input_shape[1],
             input_shape[2],
             input_shape[3],
         )
 
-        # Cyclic Shift
-        if self.roll:
+        # cyclic shift
+        if self.apply_cyclic_shift:
             shifted_x = ops.roll(
                 x,
-                shift=(-shift_size[0], -shift_size[1], -shift_size[2]),
+                shift=(
+                    -self.shift_size[0],
+                    -self.shift_size[1],
+                    -self.shift_size[2],
+                ),
                 axis=(1, 2, 3),
             )
             attn_mask = mask_matrix
@@ -137,29 +169,30 @@ class SwinTransformerBlock3D(keras.Model):
             attn_mask = None
 
         # partition windows
-        x_windows = window_partition(shifted_x, window_size)
+        x_windows = window_partition(shifted_x, self.window_size)
 
         # get attentions params
-        if return_attention_maps:
-            attention_windows, attention_maps = self.attn(
-                x_windows,
-                mask=attn_mask,
-                return_attention_maps=return_attention_maps,
-                training=training,
-            )
-        else:
-            attention_windows = self.attn(x_windows, mask=attn_mask, training=training)
+        attn_windows = self.attn(x_windows, mask=attn_mask, training=training)
 
         # reverse the swin windows
         shifted_x = window_reverse(
-            attention_windows, window_size, batch_size, depth_p, height_p, width_p
+            attn_windows,
+            self.window_size,
+            batch_size,
+            depth_pad,
+            height_pad,
+            width_pad,
         )
 
-        # Reverse Cyclic Shift
-        if self.roll:
+        # reverse cyclic shift
+        if self.apply_cyclic_shift:
             x = ops.roll(
                 shifted_x,
-                shift=(shift_size[0], shift_size[1], shift_size[2]),
+                shift=(
+                    self.shift_size[0],
+                    self.shift_size[1],
+                    self.shift_size[2],
+                ),
                 axis=(1, 2, 3),
             )
         else:
@@ -167,46 +200,47 @@ class SwinTransformerBlock3D(keras.Model):
 
         # pad if required
         do_pad = ops.logical_or(
-            ops.greater(pad_d1, 0),
-            ops.logical_or(ops.greater(pad_r, 0), ops.greater(pad_b, 0)),
+            ops.greater(self.pad_d1, 0),
+            ops.logical_or(
+                ops.greater(self.pad_r, 0), ops.greater(self.pad_b, 0)
+            ),
         )
-        x = ops.cond(do_pad, lambda: x[:, :depth, :height, :width, :], lambda: x)
-
-        if return_attention_maps:
-            return x, attention_maps
+        x = ops.cond(
+            do_pad, lambda: x[:, :depth, :height, :width, :], lambda: x
+        )
 
         return x
 
-    def call(self, x, mask_matrix=None, return_attention_maps=False, training=None):
+    def second_forward(self, x, training):
+        x = self.norm2(x)
+        x = self.mlp(x)
+        x = self.drop_path(x, training=training)
+        return x
+
+    def call(self, x, mask_matrix=None, training=None):
         shortcut = x
-        x = self._forward(x, mask_matrix, return_attention_maps, training)
-
-        if return_attention_maps:
-            x, attention_maps = x
-
+        x = self.first_forward(x, mask_matrix, training)
         x = shortcut + self.drop_path(x)
-        x = self.drop_path(self.mlp(self.norm2(x)), training=training)
-
-        if return_attention_maps:
-            return x, attention_maps
-
+        x = x + self.second_forward(x, training)
         return x
-    
+
     def get_config(self):
         config = super().get_config()
         config.update(
             {
-                "dim": self.dim,
+                "input_dim": self.input_dim,
                 "window_size": self.num_heads,
                 "num_heads": self.window_size,
                 "shift_size": self.shift_size,
                 "mlp_ratio": self.mlp_ratio,
                 "qkv_bias": self.qkv_bias,
                 "qk_scale": self.qk_scale,
-                "attn_drop": self.attn_drop,
-                "drop_rate": self.drop_rate, 
-                "drop_path": self.drop_path,
-                "mlp_hidden_dim": self.mlp_hidden_dim
+                "drop_rate": self.drop_rate,
+                "attn_drop_rate": self.attn_drop_rate,
+                "drop_path_rate": self.drop_path_rate,
+                "mlp_hidden_dim": self.mlp_hidden_dim,
+                "activation": self._activation_identifier,
             }
         )
         return config
+    

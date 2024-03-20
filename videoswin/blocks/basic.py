@@ -1,11 +1,11 @@
-from functools import partial
-from typing import Optional, Tuple, Type
 
 import keras
-from keras import layers, ops
+from keras import ops
+
+import tensorflow as tf
 
 from ..utils import compute_mask, get_window_size
-from .swin_transformer import SwinTransformerBlock3D
+from .swin_transformer import VideoSwinTransformerBlock
 
 
 class VideoSwinBasicLayer(keras.Model):
@@ -177,3 +177,4 @@ class VideoSwinBasicLayer(keras.Model):
             }
         )
         return config
+    
