@@ -59,7 +59,7 @@ class VideoSwinBackbone(keras.Model):
     Example:
     ```python
     # Build video swin backbone without top layer
-    model = VideoSwinSBackbone(
+    model = VideoSwinBackbone(
         include_rescaling=True, input_shape=(8, 256, 256, 3),
     )
     videos = keras.ops.ones((1, 8, 256, 256, 3))
