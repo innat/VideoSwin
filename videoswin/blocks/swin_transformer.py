@@ -1,4 +1,3 @@
-
 import keras
 from keras import layers, ops
 
@@ -64,9 +63,7 @@ class VideoSwinTransformerBlock(keras.Model):
         self.norm_layer = norm_layer
         self._activation_identifier = activation
 
-        for i, (shift, window) in enumerate(
-            zip(self.shift_size, self.window_size)
-        ):
+        for i, (shift, window) in enumerate(zip(self.shift_size, self.window_size)):
             if not (0 <= shift < window):
                 raise ValueError(
                     f"shift_size[{i}] must be in the range 0 to less than "
@@ -201,13 +198,9 @@ class VideoSwinTransformerBlock(keras.Model):
         # pad if required
         do_pad = ops.logical_or(
             ops.greater(self.pad_d1, 0),
-            ops.logical_or(
-                ops.greater(self.pad_r, 0), ops.greater(self.pad_b, 0)
-            ),
+            ops.logical_or(ops.greater(self.pad_r, 0), ops.greater(self.pad_b, 0)),
         )
-        x = ops.cond(
-            do_pad, lambda: x[:, :depth, :height, :width, :], lambda: x
-        )
+        x = ops.cond(do_pad, lambda: x[:, :depth, :height, :width, :], lambda: x)
 
         return x
 
@@ -243,4 +236,3 @@ class VideoSwinTransformerBlock(keras.Model):
             }
         )
         return config
-    

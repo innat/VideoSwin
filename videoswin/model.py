@@ -9,8 +9,8 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 import keras
 from keras import layers
+from .utils import parse_model_inputs
 
-from utils import parse_model_inputs
 from videoswin.blocks import VideoSwinBasicLayer
 from videoswin.layers import VideoSwinPatchingAndEmbedding, VideoSwinPatchMerging
 
@@ -91,9 +91,7 @@ class VideoSwinBackbone(keras.Model):
         **kwargs,
     ):
         # Parse input specification.
-        input_spec = parse_model_inputs(
-            input_shape, input_tensor, name="videos"
-        )
+        input_spec = parse_model_inputs(input_shape, input_tensor, name="videos")
 
         # Check that the input video is well specified.
         if (
@@ -154,9 +152,7 @@ class VideoSwinBackbone(keras.Model):
                 attn_drop_rate=attn_drop_rate,
                 drop_path_rate=dpr[sum(depths[:i]) : sum(depths[: i + 1])],
                 norm_layer=norm_layer,
-                downsample=(
-                    VideoSwinPatchMerging if (i < num_layers - 1) else None
-                ),
+                downsample=(VideoSwinPatchMerging if (i < num_layers - 1) else None),
                 name=f"videoswin_basic_layer_{i + 1}",
             )
             x = layer(x)
@@ -206,56 +202,56 @@ class VideoSwinBackbone(keras.Model):
 
 
 def VideoSwinT(
-        input_shape=(32,224,224,3),
-        num_classes=400, 
-        activation="softmax",
-        embed_size=96, 
-        depths=[2, 2, 6, 2], 
-        num_heads=[3, 6, 12, 24], 
-        include_rescaling=False, 
-        include_top=True
-    ):
-        backbone = VideoSwinBackbone(
-            input_shape=input_shape, 
-            embed_dim=embed_size,
-            depths=depths,
-            num_heads=num_heads,
-            include_rescaling=include_rescaling, 
-        )
-
-        if not include_top:
-            return backbone
-
-        pooling_layer = keras.layers.GlobalAveragePooling3D(name="avg_pool")
-        inputs = backbone.input
-        x = backbone(inputs)
-        x = pooling_layer(x)
-        outputs = keras.layers.Dense(
-            num_classes,
-            activation=activation,
-            name="predictions",
-            dtype="float32",
-        )(x)
-        model = keras.Model(inputs, outputs)
-        return model
-
-
-def VideoSwinS(
-    input_shape=(32,224,224,3),
-    num_classes=400, 
+    input_shape=(32, 224, 224, 3),
+    num_classes=400,
     activation="softmax",
-    embed_size=96, 
-    depths=[2, 2, 18, 2], 
-    num_heads=[3, 6, 12, 24], 
-    include_rescaling=False, 
-    include_top=True
-    ):
+    embed_size=96,
+    depths=[2, 2, 6, 2],
+    num_heads=[3, 6, 12, 24],
+    include_rescaling=False,
+    include_top=True,
+):
     backbone = VideoSwinBackbone(
-        input_shape=input_shape, 
+        input_shape=input_shape,
         embed_dim=embed_size,
         depths=depths,
         num_heads=num_heads,
-        include_rescaling=include_rescaling, 
+        include_rescaling=include_rescaling,
+    )
+
+    if not include_top:
+        return backbone
+
+    pooling_layer = keras.layers.GlobalAveragePooling3D(name="avg_pool")
+    inputs = backbone.input
+    x = backbone(inputs)
+    x = pooling_layer(x)
+    outputs = keras.layers.Dense(
+        num_classes,
+        activation=activation,
+        name="predictions",
+        dtype="float32",
+    )(x)
+    model = keras.Model(inputs, outputs)
+    return model
+
+
+def VideoSwinS(
+    input_shape=(32, 224, 224, 3),
+    num_classes=400,
+    activation="softmax",
+    embed_size=96,
+    depths=[2, 2, 18, 2],
+    num_heads=[3, 6, 12, 24],
+    include_rescaling=False,
+    include_top=True,
+):
+    backbone = VideoSwinBackbone(
+        input_shape=input_shape,
+        embed_dim=embed_size,
+        depths=depths,
+        num_heads=num_heads,
+        include_rescaling=include_rescaling,
     )
 
     if not include_top:
@@ -276,27 +272,27 @@ def VideoSwinS(
 
 
 def VideoSwinB(
-    input_shape=(32,224,224,3),
-    num_classes=400, 
+    input_shape=(32, 224, 224, 3),
+    num_classes=400,
     activation="softmax",
-    embed_size=128, 
-    depths=[2, 2, 18, 2], 
-    num_heads=[4, 8, 16, 32], 
-    include_rescaling=False, 
-    include_top=True
-    ):
-    
+    embed_size=128,
+    depths=[2, 2, 18, 2],
+    num_heads=[4, 8, 16, 32],
+    include_rescaling=False,
+    include_top=True,
+):
+
     backbone = VideoSwinBackbone(
-        input_shape=input_shape, 
+        input_shape=input_shape,
         embed_dim=embed_size,
         depths=depths,
         num_heads=num_heads,
-        include_rescaling=include_rescaling, 
+        include_rescaling=include_rescaling,
     )
 
     if not include_top:
         return backbone
-    
+
     pooling_layer = keras.layers.GlobalAveragePooling3D(name="avg_pool")
     inputs = backbone.input
     x = backbone(inputs)

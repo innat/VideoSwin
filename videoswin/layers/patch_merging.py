@@ -1,4 +1,3 @@
-
 from keras import layers, ops
 
 
@@ -27,16 +26,12 @@ class VideoSwinPatchMerging(layers.Layer):
     def build(self, input_shape):
         batch_size, depth, height, width, channel = input_shape
         self.reduction = layers.Dense(2 * self.input_dim, use_bias=False)
-        self.reduction.build(
-            (batch_size, depth, height // 2, width // 2, 4 * channel)
-        )
+        self.reduction.build((batch_size, depth, height // 2, width // 2, 4 * channel))
 
         self.norm = None
         if self.norm_layer is not None:
             self.norm = self.norm_layer(axis=-1, epsilon=1e-5)
-            self.norm.build(
-                (batch_size, depth, height // 2, width // 2, 4 * channel)
-            )
+            self.norm.build((batch_size, depth, height // 2, width // 2, 4 * channel))
 
         # compute padding if needed
         self.pads = [

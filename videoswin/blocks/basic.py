@@ -1,8 +1,6 @@
-
 import keras
-from keras import ops
-
 import tensorflow as tf
+from keras import ops
 
 from ..utils import compute_mask, get_window_size
 from .swin_transformer import VideoSwinTransformerBlock
@@ -72,15 +70,9 @@ class VideoSwinBasicLayer(keras.Model):
         self.window_size, self.shift_size = get_window_size(
             input_shape[1:-1], self.window_size, self.shift_size
         )
-        self.depth_pad = self._compute_dim_padded(
-            input_shape[1], self.window_size[0]
-        )
-        self.height_pad = self._compute_dim_padded(
-            input_shape[2], self.window_size[1]
-        )
-        self.width_pad = self._compute_dim_padded(
-            input_shape[3], self.window_size[2]
-        )
+        self.depth_pad = self._compute_dim_padded(input_shape[1], self.window_size[0])
+        self.height_pad = self._compute_dim_padded(input_shape[2], self.window_size[1])
+        self.width_pad = self._compute_dim_padded(input_shape[3], self.window_size[2])
         self.attn_mask = compute_mask(
             self.depth_pad,
             self.height_pad,
@@ -177,4 +169,3 @@ class VideoSwinBasicLayer(keras.Model):
             }
         )
         return config
-    

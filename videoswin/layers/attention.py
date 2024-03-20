@@ -1,4 +1,3 @@
-
 import keras
 from keras import layers, ops
 
@@ -45,9 +44,7 @@ class VideoSwinWindowAttention(keras.Model):
         self.attn_drop_rate = attn_drop_rate
         self.proj_drop_rate = proj_drop_rate
 
-    def get_relative_position_index(
-        self, window_depth, window_height, window_width
-    ):
+    def get_relative_position_index(self, window_depth, window_height, window_width):
         y_y, z_z, x_x = ops.meshgrid(
             ops.arange(window_width),
             ops.arange(window_depth),
@@ -55,18 +52,14 @@ class VideoSwinWindowAttention(keras.Model):
         )
         coords = ops.stack([z_z, y_y, x_x], axis=0)
         coords_flatten = ops.reshape(coords, [3, -1])
-        relative_coords = (
-            coords_flatten[:, :, None] - coords_flatten[:, None, :]
-        )
+        relative_coords = coords_flatten[:, :, None] - coords_flatten[:, None, :]
         relative_coords = ops.transpose(relative_coords, axes=[1, 2, 0])
         z_z = (
             (relative_coords[:, :, 0] + window_depth - 1)
             * (2 * window_height - 1)
             * (2 * window_width - 1)
         )
-        x_x = (relative_coords[:, :, 1] + window_height - 1) * (
-            2 * window_width - 1
-        )
+        x_x = (relative_coords[:, :, 1] + window_height - 1) * (2 * window_width - 1)
         y_y = relative_coords[:, :, 2] + window_width - 1
         relative_coords = ops.stack([z_z, x_x, y_y], axis=-1)
         return ops.sum(relative_coords, axis=-1)

@@ -1,4 +1,3 @@
-
 import keras
 from keras import layers, ops
 
@@ -21,9 +20,7 @@ class VideoSwinPatchingAndEmbedding(keras.Model):
         - [Video Swin Transformer GitHub](https://github.com/SwinTransformer/Video-Swin-Transformer)
     """  # noqa: E501
 
-    def __init__(
-        self, patch_size=(2, 4, 4), embed_dim=96, norm_layer=None, **kwargs
-    ):
+    def __init__(self, patch_size=(2, 4, 4), embed_dim=96, norm_layer=None, **kwargs):
         super().__init__(**kwargs)
         self.patch_size = patch_size
         self.embed_dim = embed_dim
@@ -52,9 +49,7 @@ class VideoSwinPatchingAndEmbedding(keras.Model):
 
         self.norm = None
         if self.norm_layer is not None:
-            self.norm = self.norm_layer(
-                axis=-1, epsilon=1e-5, name="embed_norm"
-            )
+            self.norm = self.norm_layer(axis=-1, epsilon=1e-5, name="embed_norm")
             self.norm.build((None, None, None, None, self.embed_dim))
         self.built = True
 
@@ -72,9 +67,7 @@ class VideoSwinPatchingAndEmbedding(keras.Model):
             (dim - self.patch_size[i]) // self.patch_size[i] + 1
             for i, dim in enumerate(input_shape[1:-1])
         ]
-        output_shape = (
-            (input_shape[0],) + tuple(spatial_dims) + (self.embed_dim,)
-        )
+        output_shape = (input_shape[0],) + tuple(spatial_dims) + (self.embed_dim,)
         return output_shape
 
     def get_config(self):

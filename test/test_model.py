@@ -1,12 +1,12 @@
 # noqa: E501
 
 import os
-import pytest
-import numpy as np
-from absl.testing import parameterized
 
-from keras import ops
+import numpy as np
+import pytest
+from absl.testing import parameterized
 from base import TestCase
+from keras import ops
 
 from videoswin import VideoSwinT
 

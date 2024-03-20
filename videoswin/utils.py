@@ -1,5 +1,5 @@
-import numpy as np
 import keras
+import numpy as np
 from keras import ops
 
 
@@ -195,14 +195,12 @@ def compute_mask(depth, height, width, window_size, shift_size):
     attn_mask = ops.where(attn_mask == 0, 0.0, attn_mask)
     return attn_mask
 
+
 def parse_model_inputs(input_shape, input_tensor, **kwargs):
     if input_tensor is None:
         return keras.layers.Input(shape=input_shape, **kwargs)
     else:
         if not keras.backend.is_keras_tensor(input_tensor):
-            return keras.layers.Input(
-                tensor=input_tensor, shape=input_shape, **kwargs
-            )
+            return keras.layers.Input(tensor=input_tensor, shape=input_shape, **kwargs)
         else:
             return input_tensor
-        
