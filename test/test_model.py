@@ -6,84 +6,139 @@ import numpy as np
 import pytest
 from absl.testing import parameterized
 from base import TestCase
+import tensorflow as tf
 from keras import ops
+import keras
+from videoswin.model import VideoSwinBackbone
+from videoswin.model import VideoSwinT
 
-from videoswin import VideoSwinT
 
+class TestVideoSwinSBackbone(TestCase):
 
-class TestVideoSwin(TestCase):
-    def setUp(self):
-        self.input_batch = ops.ones(shape=(1, 32, 224, 224, 3))
-        self.expected_shapes = {
-            "basiclayer1_attention_maps": (128, 3, 392, 392),
-            "basiclayer2_attention_maps": (32, 6, 392, 392),
-            "basiclayer3_attention_maps": (8, 12, 392, 392),
-            "basiclayer4_attention_maps": (2, 24, 392, 392),
-        }
-
-    @parameterized.named_parameters(
-        {"testcase_name": "num_classes_400", "num_classes": 400},
-        {"testcase_name": "num_classes_174", "num_classes": 174},
-        {"testcase_name": "num_classes_101", "num_classes": 101},
-    )
     @pytest.mark.large
-    def test_call(self, num_classes):
-        # build the model and run
-        model = VideoSwinT(num_classes=num_classes)
-        x = self.input_batch
-        x_out, attention_maps_dict = model(x, return_attention_maps=True)
+    def test_call(self):
+        model = VideoSwinBackbone(  # TODO: replace with aliases
+            include_rescaling=True, input_shape=(8, 256, 256, 3)
+        )
+        x = np.ones((1, 8, 256, 256, 3))
+        x_out = ops.convert_to_numpy(model(x))
+        num_parameters = sum(
+            np.prod(tuple(x.shape)) for x in model.trainable_variables
+        )
+        self.assertEqual(x_out.shape, (1, 4, 8, 8, 768))
+        self.assertEqual(num_parameters, 27_663_894)
 
-        # compute params
-        num_parameters = sum(np.prod(tuple(x.shape)) for x in model.trainable_variables)
-
-        # presets
-        expected_parameters = {
-            400: 28_158_070,  # Kinetics-400
-            174: 27_984_276,  # Something-Something-V2
-            101: 27_928_139,  # UCF101
-        }.get(num_classes)
-
-        # assert test
-        self.assertEqual(x_out.shape, (1, num_classes))
-        self.assertEqual(num_parameters, expected_parameters)
-        for key, expected_shape in self.expected_shapes.items():
-            self.assertEqual(attention_maps_dict[key].shape, expected_shape)
-
-    @parameterized.named_parameters(
-        {"testcase_name": "num_classes_400", "num_classes": 400},
-        {"testcase_name": "num_classes_174", "num_classes": 174},
-        {"testcase_name": "num_classes_101", "num_classes": 101},
-    )
     @pytest.mark.extra_large
-    def test_save(self, num_classes):
+    def teat_save(self):
         # saving test
-        x = self.input_batch
-
-        # build the model and run and save weights
-        model = VideoSwinT(num_classes=num_classes)
-        x_out = model(x)
-        path = os.path.join(self.get_temp_dir(), "model.weights.h5")
-        model.save_weights(path)
-
-        # load the saved model
-        loaded_model = VideoSwinT(num_classes=num_classes)
-        loaded_model(x)
-        loaded_model.load_weights(path)
+        model = VideoSwinBackbone(include_rescaling=False)
+        x = np.ones((1, 32, 224, 224, 3))
+        x_out = ops.convert_to_numpy(model(x))
+        path = os.path.join(self.get_temp_dir(), "model.keras")
+        model.save(path)
+        loaded_model = keras.saving.load_model(path)
         x_out_loaded = ops.convert_to_numpy(loaded_model(x))
-
-        # assert test
         self.assertAllClose(x_out, x_out_loaded)
 
-    @parameterized.named_parameters(
-        {"testcase_name": "input_shape_8x96x96", "input_shape": (8, 96, 96, 3)},
-        {"testcase_name": "input_shape_8x224x224", "input_shape": (8, 224, 224, 3)},
-        {"testcase_name": "input_shape_16x96x96", "input_shape": (16, 96, 96, 3)},
-        {"testcase_name": "input_shape_16x312x312", "input_shape": (16, 312, 312, 3)},
-        {"testcase_name": "input_shape_32x224x224", "input_shape": (32, 224, 224, 3)},
-    )
     @pytest.mark.extra_large
-    def test_call_with_variable_shape(self, input_shape):
-        model = VideoSwinT(num_classes=400)
-        x_inp = ops.ones(shape=(1, *input_shape))
-        x_out = model(x_inp)
-        self.assertEqual(x_out.shape, (1, 400))
+    def test_fit(self):
+        model = VideoSwinBackbone(include_rescaling=False)
+        x = np.ones((1, 32, 224, 224, 3))
+        y = np.zeros((1, 16, 7, 7, 768))
+        model.compile(optimizer="adam", loss="mse", metrics=["mse"])
+        model.fit(x, y, epochs=1)
+
+    @pytest.mark.extra_large
+    def test_can_run_in_mixed_precision(self):
+        keras.mixed_precision.set_global_policy("mixed_float16")
+        model = VideoSwinBackbone(
+            include_rescaling=False, input_shape=(8, 224, 224, 3)
+        )
+        x = np.ones((1, 8, 224, 224, 3))
+        y = np.zeros((1, 4, 7, 7, 768))
+        model.compile(optimizer="adam", loss="mse", metrics=["mse"])
+        model.fit(x, y, epochs=1)
+
+    @pytest.mark.extra_large
+    def test_can_run_on_gray_video(self):
+        model = VideoSwinBackbone(
+            include_rescaling=False,
+            input_shape=(96, 96, 96, 1),
+            window_size=[6, 6, 6],
+        )
+        x = np.ones((1, 96, 96, 96, 1))
+        y = np.zeros((1, 48, 3, 3, 768))
+        model.compile(optimizer="adam", loss="mse", metrics=["mse"])
+        model.fit(x, y, epochs=1)
+
+
+class VideoClassifierTest(TestCase):
+    def setUp(self):
+        self.input_batch = np.ones(shape=(10, 8, 224, 224, 3))
+        self.dataset = tf.data.Dataset.from_tensor_slices(
+            (self.input_batch, tf.one_hot(tf.ones((10,), dtype="int32"), 10))
+        ).batch(4)
+
+    def test_valid_call(self):
+        model = VideoSwinT(
+            backbone=VideoSwinBackbone(
+                input_shape=(8, 224, 224, 3), include_rescaling=False
+            ),
+            num_classes=10,
+        )
+        model(self.input_batch)
+
+    @parameterized.named_parameters(
+        ("jit_compile_false", False), ("jit_compile_true", True)
+    )
+    @pytest.mark.large  # Fit is slow, so mark these large.
+    def test_classifier_fit(self, jit_compile):
+        model = VideoSwinT(
+            backbone=VideoSwinBackbone(
+                input_shape=(8, 224, 224, 3), include_rescaling=True
+            ),
+            num_classes=10,
+        )
+        model.compile(
+            loss="categorical_crossentropy",
+            optimizer="adam",
+            metrics=["accuracy"],
+            jit_compile=jit_compile,
+        )
+        model.fit(self.dataset)
+
+    @parameterized.named_parameters(
+        ("avg_pooling", "avg"), ("max_pooling", "max")
+    )
+    def test_pooling_arg_call(self, pooling):
+        model = VideoSwinT(
+            backbone=VideoSwinBackbone(
+                input_shape=(8, 224, 224, 3), include_rescaling=True
+            ),
+            num_classes=10,
+            pooling=pooling,
+        )
+        model(self.input_batch)
+
+    @pytest.mark.large  # Saving is slow, so mark these large.
+    def test_saved_model(self):
+        model = VideoSwinT(
+            backbone=VideoSwinBackbone(
+                input_shape=(8, 224, 224, 3), include_rescaling=False
+            ),
+            num_classes=10,
+        )
+        model_output = model(self.input_batch)
+        save_path = os.path.join(self.get_temp_dir(), "video_classifier.keras")
+        model.save(save_path)
+        restored_model = keras.models.load_model(save_path)
+
+        # Check we got the real object back.
+        self.assertIsInstance(restored_model, VideoSwinT)
+
+        # Check that output matches.
+        restored_output = restored_model(self.input_batch)
+        self.assertAllClose(
+            ops.convert_to_numpy(model_output),
+            ops.convert_to_numpy(restored_output),
+        )
