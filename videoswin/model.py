@@ -205,6 +205,7 @@ class VideoSwinBackbone(keras.Model):
 def VideoSwinT(
     input_shape=(32, 224, 224, 3),
     num_classes=400,
+    pooling="avg",
     activation="softmax",
     embed_size=96,
     depths=[2, 2, 6, 2],
@@ -212,6 +213,14 @@ def VideoSwinT(
     include_rescaling=False,
     include_top=True,
 ):
+
+    if pooling == "avg":
+        pooling_layer = keras.layers.GlobalAveragePooling3D(name="avg_pool")
+    elif pooling == "max":
+        pooling_layer = keras.layers.GlobalMaxPooling3D(name="max_pool")
+    else:
+        raise ValueError(f'`pooling` must be one of "avg", "max". Received: {pooling}.')
+
     backbone = VideoSwinBackbone(
         input_shape=input_shape,
         embed_dim=embed_size,
@@ -223,7 +232,6 @@ def VideoSwinT(
     if not include_top:
         return backbone
 
-    pooling_layer = keras.layers.GlobalAveragePooling3D(name="avg_pool")
     inputs = backbone.input
     x = backbone(inputs)
     x = pooling_layer(x)
@@ -240,6 +248,7 @@ def VideoSwinT(
 def VideoSwinS(
     input_shape=(32, 224, 224, 3),
     num_classes=400,
+    pooling="avg",
     activation="softmax",
     embed_size=96,
     depths=[2, 2, 18, 2],
@@ -247,6 +256,14 @@ def VideoSwinS(
     include_rescaling=False,
     include_top=True,
 ):
+
+    if pooling == "avg":
+        pooling_layer = keras.layers.GlobalAveragePooling3D(name="avg_pool")
+    elif pooling == "max":
+        pooling_layer = keras.layers.GlobalMaxPooling3D(name="max_pool")
+    else:
+        raise ValueError(f'`pooling` must be one of "avg", "max". Received: {pooling}.')
+
     backbone = VideoSwinBackbone(
         input_shape=input_shape,
         embed_dim=embed_size,
@@ -275,6 +292,7 @@ def VideoSwinS(
 def VideoSwinB(
     input_shape=(32, 224, 224, 3),
     num_classes=400,
+    pooling="avg",
     activation="softmax",
     embed_size=128,
     depths=[2, 2, 18, 2],
@@ -282,6 +300,13 @@ def VideoSwinB(
     include_rescaling=False,
     include_top=True,
 ):
+
+    if pooling == "avg":
+        pooling_layer = keras.layers.GlobalAveragePooling3D(name="avg_pool")
+    elif pooling == "max":
+        pooling_layer = keras.layers.GlobalMaxPooling3D(name="max_pool")
+    else:
+        raise ValueError(f'`pooling` must be one of "avg", "max". Received: {pooling}.')
 
     backbone = VideoSwinBackbone(
         input_shape=input_shape,
