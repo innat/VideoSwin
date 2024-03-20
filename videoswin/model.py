@@ -7,150 +7,187 @@ import numpy as np
 warnings.simplefilter(action="ignore")
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
-from typing import List, Optional, Tuple, Type, Union
-
 import keras
 from keras import layers
 
-from videoswin.blocks import BasicLayer
-from videoswin.layers import PatchEmbed3D, PatchMerging
+from utils import parse_model_inputs
+from videoswin.blocks import VideoSwinBasicLayer
+from videoswin.layers import VideoSwinPatchingAndEmbedding, VideoSwinPatchMerging
 
 
 @keras.utils.register_keras_serializable(package="swin.transformer.3d")
-class SwinTransformer3D(keras.Model):
-    """Swin Transformer backbone.
-        A Keras impl of : `Swin Transformer: Hierarchical Vision Transformer using Shifted Windows`  -
-          https://arxiv.org/pdf/2103.14030
+class VideoSwinBackbone(keras.Model):
+    """A Video Swin Transformer backbone model.
 
     Args:
-        patch_size (int | tuple(int)): Patch size. Default: (4,4,4).
-        embed_dim (int): Number of linear projection output channels. Default: 96.
+        input_shape (tuple[int], optional): The size of the input video in
+            `(depth, height, width, channel)` format.
+            Defaults to `(32, 224, 224, 3)`.
+        input_tensor (KerasTensor, optional): Output of
+            `keras.layers.Input()`) to use as video input for the model.
+            Defaults to `None`.
+        include_rescaling (bool, optional): Whether to rescale the inputs. If
+            set to `True`, inputs will be passed through a `Rescaling(1/255.0)` layer
+            and normalize with mean=[0.485, 0.456, 0.406] and std=[0.229, 0.224, 0.225].
+            Defaults to `False`.
+        patch_size (int | tuple(int)): The patch size for depth, height, and width
+            dimensions respectively. Default: (2,4,4).
+        embed_dim (int): Number of linear projection output channels.
+            Default to 96.
         depths (tuple[int]): Depths of each Swin Transformer stage.
+            Default to [2, 2, 6, 2]
         num_heads (tuple[int]): Number of attention head of each stage.
-        window_size (int): Window size. Default: 7.
-        mlp_ratio (float): Ratio of mlp hidden dim to embedding dim. Default: 4.
-        qkv_bias (bool): If True, add a learnable bias to query, key, value. Default: Truee
+            Default to [3, 6, 12, 24]
+        window_size (int): The window size for depth, height, and width
+            dimensions respectively. Default to [8, 7, 7].
+        mlp_ratio (float): Ratio of mlp hidden dim to embedding dim.
+            Default to 4.
+        qkv_bias (bool): If True, add a learnable bias to query, key, value.
+            Default to True.
         qk_scale (float): Override default qk scale of head_dim ** -0.5 if set.
-        drop_rate (float): Dropout rate.
-        attn_drop_rate (float): Attention dropout rate. Default: 0.
-        drop_path_rate (float): Stochastic depth rate. Default: 0.2.
-        norm_layer: Normalization layer. Default: LayerNormalization.
-        patch_norm (bool): If True, add normalization after patch embedding. Default: False.
-        frozen_stages (int): Stages to be frozen (stop grad and set eval mode).
-            -1 means not freezing any parameters.
-    """
+            Default to None.
+        drop_rate (float): Float between 0 and 1. Fraction of the input units to drop.
+            Default: 0.
+        attn_drop_rate (float): Float between 0 and 1. Attention dropout rate.
+            Default: 0.
+        drop_path_rate (float): Float between 0 and 1. Stochastic depth rate.
+            Default: 0.2.
+        patch_norm (bool): If True, add layer normalization after patch embedding.
+            Default to False.
+
+    Example:
+    ```python
+    # Build video swin backbone without top layer
+    model = VideoSwinSBackbone(
+        include_rescaling=True, input_shape=(8, 256, 256, 3),
+    )
+    videos = keras.ops.ones((1, 8, 256, 256, 3))
+    outputs = model.predict(videos)
+    ```
+
+    References:
+        - [Video Swin Transformer](https://arxiv.org/abs/2106.13230)
+        - [Official Code](https://github.com/SwinTransformer/Video-Swin-Transformer)
+    """  # noqa: E501
 
     def __init__(
         self,
-        patch_size: Union[int, Tuple[int, int, int]] = (4, 4, 4),
-        embed_dim: int = 96,
-        depths: List[int] = [2, 2, 6, 2],
-        num_heads: List[int] = [3, 6, 12, 24],
-        window_size: List[int] = [2, 7, 7],
-        mlp_ratio: float = 4.0,
-        qkv_bias: bool = True,
-        qk_scale: Optional[float] = None,
-        drop_rate: float = 0.0,
-        attn_drop_rate: float = 0.0,
-        drop_path_rate: float = 0.2,
-        norm_layer: Type[layers.Layer] = layers.LayerNormalization,
-        patch_norm: bool = False,
-        num_classes: int = 400,
+        *,
+        include_rescaling,
+        input_shape=(32, 224, 224, 3),
+        input_tensor=None,
+        embed_dim=96,
+        patch_size=[2, 4, 4],
+        window_size=[8, 7, 7],
+        mlp_ratio=4.0,
+        patch_norm=True,
+        drop_rate=0.0,
+        attn_drop_rate=0.0,
+        drop_path_rate=0.2,
+        depths=[2, 2, 6, 2],
+        num_heads=[3, 6, 12, 24],
+        qkv_bias=True,
+        qk_scale=None,
         **kwargs,
-    ) -> keras.Model:
-        super().__init__(**kwargs)
-        self.num_layers = len(depths)
+    ):
+        # Parse input specification.
+        input_spec = parse_model_inputs(
+            input_shape, input_tensor, name="videos"
+        )
+
+        # Check that the input video is well specified.
+        if (
+            input_spec.shape[-4] is None
+            or input_spec.shape[-3] is None
+            or input_spec.shape[-2] is None
+        ):
+            raise ValueError(
+                "Depth, height and width of the video must be specified"
+                " in `input_shape`."
+            )
+        if input_spec.shape[-3] != input_spec.shape[-2]:
+            raise ValueError(
+                "Input video must be square i.e. the height must"
+                " be equal to the width in the `input_shape`"
+                " tuple/tensor."
+            )
+
+        x = input_spec
+
+        if include_rescaling:
+            # Use common rescaling strategy across keras_cv
+            x = keras.layers.Rescaling(1.0 / 255.0)(x)
+
+            # VideoSwin scales inputs based on the ImageNet mean/stddev.
+            # Officially, Videw Swin takes tensor of [0-255] ranges.
+            # And use mean=[123.675, 116.28, 103.53] and
+            # std=[58.395, 57.12, 57.375] for normalization.
+            # So, if include_rescaling is set to True, then, to match with the
+            # official scores, following normalization should be added.
+            x = layers.Normalization(
+                mean=[0.485, 0.456, 0.406],
+                variance=[0.229**2, 0.224**2, 0.225**2],
+            )(x)
+
+        norm_layer = partial(layers.LayerNormalization, epsilon=1e-05)
+
+        x = VideoSwinPatchingAndEmbedding(
+            patch_size=patch_size,
+            embed_dim=embed_dim,
+            norm_layer=norm_layer if patch_norm else None,
+            name="videoswin_patching_and_embedding",
+        )(x)
+        x = layers.Dropout(drop_rate, name="pos_drop")(x)
+
+        dpr = np.linspace(0.0, drop_path_rate, sum(depths)).tolist()
+        num_layers = len(depths)
+        for i in range(num_layers):
+            layer = VideoSwinBasicLayer(
+                input_dim=int(embed_dim * 2**i),
+                depth=depths[i],
+                num_heads=num_heads[i],
+                window_size=window_size,
+                mlp_ratio=mlp_ratio,
+                qkv_bias=qkv_bias,
+                qk_scale=qk_scale,
+                drop_rate=drop_rate,
+                attn_drop_rate=attn_drop_rate,
+                drop_path_rate=dpr[sum(depths[:i]) : sum(depths[: i + 1])],
+                norm_layer=norm_layer,
+                downsample=(
+                    VideoSwinPatchMerging if (i < num_layers - 1) else None
+                ),
+                name=f"videoswin_basic_layer_{i + 1}",
+            )
+            x = layer(x)
+
+        x = norm_layer(axis=-1, epsilon=1e-05, name="videoswin_top_norm")(x)
+        super().__init__(inputs=input_spec, outputs=x, **kwargs)
+
+        self.include_rescaling = include_rescaling
+        self.input_tensor = input_tensor
         self.embed_dim = embed_dim
-        self.patch_norm = patch_norm
-        self.window_size = window_size
         self.patch_size = patch_size
+        self.window_size = window_size
         self.mlp_ratio = mlp_ratio
         self.norm_layer = norm_layer
+        self.patch_norm = patch_norm
         self.drop_rate = drop_rate
-        self.drop_path_rate = drop_path_rate
         self.attn_drop_rate = attn_drop_rate
-        self.depths = depths
+        self.drop_path_rate = drop_path_rate
+        self.num_layers = len(depths)
         self.num_heads = num_heads
         self.qkv_bias = qkv_bias
         self.qk_scale = qk_scale
-        self.num_classes = num_classes
+        self.depths = depths
 
-    def build(self, input_shape):
-        # split image into non-overlapping patches
-        self.patch_embed = PatchEmbed3D(
-            patch_size=self.patch_size,
-            embed_dim=self.embed_dim,
-            norm_layer=self.norm_layer if self.patch_norm else None,
-            name="PatchEmbed3D",
-        )
-        self.pos_drop = layers.Dropout(self.drop_rate, name="pos_drop")
-
-        # stochastic depth
-        dpr = np.linspace(0.0, self.drop_path_rate, sum(self.depths)).tolist()
-
-        # build layers
-        self.basic_layers = []
-        for i_layer in range(self.num_layers):
-            layer = BasicLayer(
-                dim=int(self.embed_dim * 2**i_layer),
-                depth=self.depths[i_layer],
-                num_heads=self.num_heads[i_layer],
-                window_size=self.window_size,
-                mlp_ratio=self.mlp_ratio,
-                qkv_bias=self.qkv_bias,
-                qk_scale=self.qk_scale,
-                drop_rate=self.drop_rate,
-                attn_drop=self.attn_drop_rate,
-                drop_path=dpr[
-                    sum(self.depths[:i_layer]) : sum(self.depths[: i_layer + 1])
-                ],
-                norm_layer=self.norm_layer,
-                downsample=PatchMerging if (i_layer < self.num_layers - 1) else None,
-                name=f"BasicLayer{i_layer+1}",
-            )
-            self.basic_layers.append(layer)
-
-        self.norm = self.norm_layer(axis=-1, epsilon=1e-05, name="norm")
-        self.avg_pool3d = layers.GlobalAveragePooling3D()
-        self.head = layers.Dense(
-            self.num_classes, use_bias=True, name="head", dtype="float32"
-        )
-        self.build_shape = input_shape[1:]
-
-    def call(self, x, return_attention_maps=False, training=None):
-        # tensor embeddings
-        x = self.patch_embed(x)
-        x = self.pos_drop(x, training=training)
-
-        # video-swin block computation
-        attention_maps_dict = {}
-        for layer in self.basic_layers:
-            if return_attention_maps:
-                x, attention_maps = layer(
-                    x, return_attention_maps=return_attention_maps, training=training
-                )
-                attention_maps_dict[f"{layer.name.lower()}_attention_maps"] = attention_maps
-            else:
-                x = layer(x, training=training)
-
-        # head branch
-        x = self.norm(x)
-        x = self.avg_pool3d(x)
-        x = self.head(x)
-
-        if return_attention_maps:
-            return x, attention_maps_dict
-
-        return x
-
-    def build_graph(self):
-        x = keras.Input(shape=self.build_shape, name="input_graph")
-        return keras.Model(inputs=[x], outputs=self.call(x))
-    
     def get_config(self):
         config = super().get_config()
         config.update(
             {
+                "include_rescaling": self.include_rescaling,
+                "input_shape": self.input_shape[1:],
+                "input_tensor": self.input_tensor,
                 "embed_dim": self.embed_dim,
                 "patch_norm": self.patch_norm,
                 "window_size": self.window_size,
@@ -163,70 +200,112 @@ class SwinTransformer3D(keras.Model):
                 "num_heads": self.num_heads,
                 "qkv_bias": self.qkv_bias,
                 "qk_scale": self.qk_scale,
-                "num_classes": self.num_classes,
             }
         )
         return config
 
 
-def VideoSwinT(num_classes, window_size=(8, 7, 7), drop_path_rate=0.2, **kwargs):
-    model = SwinTransformer3D(
-        num_classes=num_classes,
-        patch_size=(2, 4, 4),
-        embed_dim=96,
-        depths=[2, 2, 6, 2],
-        num_heads=[3, 6, 12, 24],
-        window_size=window_size,
-        mlp_ratio=4.0,
-        qkv_bias=True,
-        qk_scale=None,
-        drop_rate=0.0,
-        attn_drop_rate=0.0,
-        drop_path_rate=drop_path_rate,
-        norm_layer=partial(layers.LayerNormalization, epsilon=1e-05),
-        patch_norm=True,
-        **kwargs,
+def VideoSwinT(
+        input_shape=(32,224,224,3),
+        num_classes=400, 
+        activation="softmax",
+        embed_size=96, 
+        depths=[2, 2, 6, 2], 
+        num_heads=[3, 6, 12, 24], 
+        include_rescaling=False, 
+        include_top=True
+    ):
+        backbone = VideoSwinBackbone(
+            input_shape=input_shape, 
+            embed_dim=embed_size,
+            depths=depths,
+            num_heads=num_heads,
+            include_rescaling=include_rescaling, 
+        )
+
+        if not include_top:
+            return backbone
+
+        pooling_layer = keras.layers.GlobalAveragePooling3D(name="avg_pool")
+        inputs = backbone.input
+        x = backbone(inputs)
+        x = pooling_layer(x)
+        outputs = keras.layers.Dense(
+            num_classes,
+            activation=activation,
+            name="predictions",
+            dtype="float32",
+        )(x)
+        model = keras.Model(inputs, outputs)
+        return model
+
+
+def VideoSwinS(
+    input_shape=(32,224,224,3),
+    num_classes=400, 
+    activation="softmax",
+    embed_size=96, 
+    depths=[2, 2, 18, 2], 
+    num_heads=[3, 6, 12, 24], 
+    include_rescaling=False, 
+    include_top=True
+    ):
+    backbone = VideoSwinBackbone(
+        input_shape=input_shape, 
+        embed_dim=embed_size,
+        depths=depths,
+        num_heads=num_heads,
+        include_rescaling=include_rescaling, 
     )
+
+    if not include_top:
+        return backbone
+
+    pooling_layer = keras.layers.GlobalAveragePooling3D(name="avg_pool")
+    inputs = backbone.input
+    x = backbone(inputs)
+    x = pooling_layer(x)
+    outputs = keras.layers.Dense(
+        num_classes,
+        activation=activation,
+        name="predictions",
+        dtype="float32",
+    )(x)
+    model = keras.Model(inputs, outputs)
     return model
 
 
-def VideoSwinS(num_classes, window_size=(8, 7, 7), drop_path_rate=0.2, **kwargs):
-    model = SwinTransformer3D(
-        num_classes=num_classes,
-        patch_size=(2, 4, 4),
-        embed_dim=96,
-        depths=[2, 2, 18, 2],
-        num_heads=[3, 6, 12, 24],
-        window_size=window_size,
-        mlp_ratio=4.0,
-        qkv_bias=True,
-        qk_scale=None,
-        drop_rate=0.0,
-        attn_drop_rate=0.0,
-        drop_path_rate=drop_path_rate,
-        norm_layer=partial(layers.LayerNormalization, epsilon=1e-05),
-        patch_norm=True,
-        **kwargs,
+def VideoSwinB(
+    input_shape=(32,224,224,3),
+    num_classes=400, 
+    activation="softmax",
+    embed_size=128, 
+    depths=[2, 2, 18, 2], 
+    num_heads=[4, 8, 16, 32], 
+    include_rescaling=False, 
+    include_top=True
+    ):
+    
+    backbone = VideoSwinBackbone(
+        input_shape=input_shape, 
+        embed_dim=embed_size,
+        depths=depths,
+        num_heads=num_heads,
+        include_rescaling=include_rescaling, 
     )
-    return model
 
-
-def VideoSwinB(num_classes, window_size=(8, 7, 7), drop_path_rate=0.2, **kwargs):
-    model = SwinTransformer3D(
-        num_classes=num_classes,
-        patch_size=(2, 4, 4),
-        embed_dim=128,
-        depths=[2, 2, 18, 2],
-        num_heads=[4, 8, 16, 32],
-        window_size=window_size,
-        mlp_ratio=4.0,
-        qkv_bias=True,
-        qk_scale=None,
-        drop_rate=0.0,
-        attn_drop_rate=0.0,
-        drop_path_rate=drop_path_rate,
-        norm_layer=partial(layers.LayerNormalization, epsilon=1e-05),
-        patch_norm=True,
-        **kwargs,
-    )
+    if not include_top:
+        return backbone
+    
+    pooling_layer = keras.layers.GlobalAveragePooling3D(name="avg_pool")
+    inputs = backbone.input
+    x = backbone(inputs)
+    x = pooling_layer(x)
+    outputs = keras.layers.Dense(
+        num_classes,
+        activation=activation,
+        name="predictions",
+        dtype="float32",
+    )(x)
+    model = keras.Model(inputs, outputs)
     return model
