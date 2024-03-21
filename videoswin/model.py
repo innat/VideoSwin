@@ -24,7 +24,7 @@ class SubClassVideoSwinT(keras.Model):
             include_top=True,
             **kwargs,
         ):
-        super().__init(**kwargs)
+        super().__init__(**kwargs)
         self.input_shape=input_shape
         self.num_classes = num_classes
         self.pooling = pooling
