@@ -267,8 +267,8 @@ class VideoSwinT(keras.Model):
         return config
 
 
-@keras.utils.register_keras_serializable(package="swin.transformer.base.3d")
-class VideoSwinB(keras.Model):
+@keras.utils.register_keras_serializable(package="swin.transformer.small.3d")
+class VideoSwinS(keras.Model):
     def __init__(
         self,
         input_shape=(32, 224, 224, 3),
