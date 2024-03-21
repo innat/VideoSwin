@@ -171,26 +171,23 @@ class VideoSwinBackbone(keras.Model):
         self.depths = depths
 
     def get_config(self):
-        config = super().get_config()
-        config.update(
-            {
-                "include_rescaling": self.include_rescaling,
-                "input_shape": self.input_shape[1:],
-                "input_tensor": self.input_tensor,
-                "embed_dim": self.embed_dim,
-                "patch_norm": self.patch_norm,
-                "window_size": self.window_size,
-                "patch_size": self.patch_size,
-                "mlp_ratio": self.mlp_ratio,
-                "drop_rate": self.drop_rate,
-                "drop_path_rate": self.drop_path_rate,
-                "attn_drop_rate": self.attn_drop_rate,
-                "depths": self.depths,
-                "num_heads": self.num_heads,
-                "qkv_bias": self.qkv_bias,
-                "qk_scale": self.qk_scale,
-            }
-        )
+        config = {
+            "include_rescaling": self.include_rescaling,
+            "input_shape": self.input_shape[1:],
+            "input_tensor": self.input_tensor,
+            "embed_dim": self.embed_dim,
+            "patch_norm": self.patch_norm,
+            "window_size": self.window_size,
+            "patch_size": self.patch_size,
+            "mlp_ratio": self.mlp_ratio,
+            "drop_rate": self.drop_rate,
+            "drop_path_rate": self.drop_path_rate,
+            "attn_drop_rate": self.attn_drop_rate,
+            "depths": self.depths,
+            "num_heads": self.num_heads,
+            "qkv_bias": self.qkv_bias,
+            "qk_scale": self.qk_scale,
+        }
         return config
 
 

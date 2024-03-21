@@ -1,4 +1,3 @@
-import tensorflow as tf
 from base import TestCase
 from keras import ops
 
