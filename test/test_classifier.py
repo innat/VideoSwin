@@ -56,7 +56,6 @@ class VideoClassifierTest(TestCase):
 
     @pytest.mark.large  # Saving is slow, so mark these large.
     def test_saved_model(self):
-        self.skipTest("Skipping saving test for now.")
         model = VideoSwinT(
             input_shape=(8, 224, 224, 3),
             include_rescaling=False,
