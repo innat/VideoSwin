@@ -11,8 +11,7 @@ import keras
 from keras import layers
 
 from videoswin.blocks import VideoSwinBasicLayer
-from videoswin.layers import (VideoSwinPatchingAndEmbedding,
-                              VideoSwinPatchMerging)
+from videoswin.layers import VideoSwinPatchingAndEmbedding, VideoSwinPatchMerging
 
 from .utils import parse_model_inputs
 
@@ -252,17 +251,17 @@ class VideoSwinT(keras.Model):
 
     def get_config(self):
         config = {
-                "input_shape": self.input_shape[1:],
-                "num_classes": self.num_classes,
-                "pooling": self.pooling,
-                "activation": self.activation,
-                "embed_size": self.embed_size,
-                "depths": self.depths,
-                "num_heads": self.num_heads,
-                "include_rescaling": self.include_rescaling,
-                "include_top": self.include_top,
-            }
-        
+            "input_shape": self.input_shape[1:],
+            "num_classes": self.num_classes,
+            "pooling": self.pooling,
+            "activation": self.activation,
+            "embed_size": self.embed_size,
+            "depths": self.depths,
+            "num_heads": self.num_heads,
+            "include_rescaling": self.include_rescaling,
+            "include_top": self.include_top,
+        }
+
         return config
 
 
@@ -322,20 +321,17 @@ class VideoSwinS(keras.Model):
         self.include_top = include_top
 
     def get_config(self):
-        config = super().get_config()
-        config.update(
-            {
-                "input_shape": self.input_shape[1:],
-                "num_classes": self.num_classes,
-                "pooling": self.pooling,
-                "activation": self.activation,
-                "embed_size": self.embed_size,
-                "depths": self.depths,
-                "num_heads": self.num_heads,
-                "include_rescaling": self.include_rescaling,
-                "include_top": self.include_top,
-            }
-        )
+        config = {
+            "input_shape": self.input_shape[1:],
+            "num_classes": self.num_classes,
+            "pooling": self.pooling,
+            "activation": self.activation,
+            "embed_size": self.embed_size,
+            "depths": self.depths,
+            "num_heads": self.num_heads,
+            "include_rescaling": self.include_rescaling,
+            "include_top": self.include_top,
+        }
         return config
 
 
@@ -395,18 +391,15 @@ class VideoSwinB(keras.Model):
         self.include_top = include_top
 
     def get_config(self):
-        config = super().get_config()
-        config.update(
-            {
-                "input_shape": self.input_shape[1:],
-                "num_classes": self.num_classes,
-                "pooling": self.pooling,
-                "activation": self.activation,
-                "embed_size": self.embed_size,
-                "depths": self.depths,
-                "num_heads": self.num_heads,
-                "include_rescaling": self.include_rescaling,
-                "include_top": self.include_top,
-            }
-        )
+        config = {
+            "input_shape": self.input_shape[1:],
+            "num_classes": self.num_classes,
+            "pooling": self.pooling,
+            "activation": self.activation,
+            "embed_size": self.embed_size,
+            "depths": self.depths,
+            "num_heads": self.num_heads,
+            "include_rescaling": self.include_rescaling,
+            "include_top": self.include_top,
+        }
         return config
