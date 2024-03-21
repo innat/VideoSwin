@@ -6,7 +6,7 @@ import pytest
 from base import TestCase
 from keras import ops
 
-from videoswin.model import VideoSwinBackbone
+from videoswin.backbone import VideoSwinBackbone
 
 
 class TestVideoSwinSBackbone(TestCase):
