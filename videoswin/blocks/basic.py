@@ -118,7 +118,7 @@ class VideoSwinBasicLayer(keras.Model):
         if self.downsample is not None:
             # TODO: remove tensorflow dependencies.
             # GitHub issue: https://github.com/keras-team/keras/issues/19259 # noqa: E501
-            output_shape = tf.TensorShape(
+            output_shape = keras.KerasTensor(
                 [
                     input_shape[0],
                     self.depth_pad,
