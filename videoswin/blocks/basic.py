@@ -125,7 +125,7 @@ class VideoSwinBasicLayer(keras.Model):
                     self.height_pad // 2,
                     self.width_pad // 2,
                     2 * self.input_dim,
-                ]
+                ], dtype=self.compute_dtype
             )
             return output_shape
 
