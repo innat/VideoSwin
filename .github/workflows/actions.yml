@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   video_swin:
-    name: Test the code with Keras 3
+    name: Test Video Swin Transformer with Keras 3
     strategy:
       fail-fast: false
       matrix:
