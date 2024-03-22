@@ -61,6 +61,16 @@ class VideoSwinPatchingAndEmbedding(keras.Model):
             x = self.norm(x)
 
         return x
+    
+    def compute_output_shape(self, input_shape):
+        spatial_dims = [
+            (dim - self.patch_size[i]) // self.patch_size[i] + 1
+            for i, dim in enumerate(input_shape[1:-1])
+        ]
+        output_shape = (
+            (input_shape[0],) + tuple(spatial_dims) + (self.embed_dim,)
+        )
+        return output_shape
 
     def get_config(self):
         config = super().get_config()
