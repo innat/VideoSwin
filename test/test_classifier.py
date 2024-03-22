@@ -20,7 +20,15 @@ class VideoClassifierTest(TestCase):
 
     def test_valid_call(self):
         model = VideoSwinT(
-            input_shape=(8, 224, 224, 3),
+            input_shape=(8, 256, 256, 3),
+            include_rescaling=False,
+            num_classes=10,
+        )
+        model(self.input_batch)
+
+    def test_valid_call_non_square_shape(self):
+        model = VideoSwinT(
+            input_shape=(8, 224, 256, 3),
             include_rescaling=False,
             num_classes=10,
         )
