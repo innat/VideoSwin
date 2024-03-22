@@ -19,20 +19,22 @@ class VideoClassifierTest(TestCase):
         ).batch(4)
 
     def test_valid_call(self):
+        input_batch = np.ones(shape=(2, 8, 256, 256, 3))
         model = VideoSwinT(
             input_shape=(8, 256, 256, 3),
             include_rescaling=False,
             num_classes=10,
         )
-        model(self.input_batch)
+        model(input_batch)
 
     def test_valid_call_non_square_shape(self):
+        input_batch = np.ones(shape=(2, 8, 224, 256, 3))
         model = VideoSwinT(
             input_shape=(8, 224, 256, 3),
             include_rescaling=False,
             num_classes=10,
         )
-        model(self.input_batch)
+        model(input_batch)
 
     @parameterized.named_parameters(
         ("jit_compile_false", False), ("jit_compile_true", True)
@@ -54,13 +56,14 @@ class VideoClassifierTest(TestCase):
 
     @parameterized.named_parameters(("avg_pooling", "avg"), ("max_pooling", "max"))
     def test_pooling_arg_call(self, pooling):
+        input_batch = np.ones(shape=(2, 8, 224, 224, 3))
         model = VideoSwinT(
             input_shape=(8, 224, 224, 3),
             include_rescaling=True,
             num_classes=10,
             pooling=pooling,
         )
-        model(self.input_batch)
+        model(input_batch)
 
     @pytest.mark.large  # Saving is slow, so mark these large.
     def test_saved_model(self):
