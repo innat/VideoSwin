@@ -8,6 +8,49 @@ import keras
 
 from videoswin.backbone import VideoSwinBackbone
 
+def mVideoSwinT(
+    input_shape=(32, 224, 224, 3),
+    num_classes=400,
+    pooling="avg",
+    activation="softmax",
+    embed_size=96,
+    depths=[2, 2, 6, 2],
+    num_heads=[3, 6, 12, 24],
+    include_rescaling=False,
+    include_top=True,
+):
+    if pooling == "avg":
+        pooling_layer = keras.layers.GlobalAveragePooling3D(name="avg_pool")
+    elif pooling == "max":
+        pooling_layer = keras.layers.GlobalMaxPooling3D(name="max_pool")
+    else:
+        raise ValueError(
+            f'`pooling` must be one of "avg", "max". Received: {pooling}.'
+        )
+
+    backbone = VideoSwinBackbone(
+        input_shape=input_shape,
+        embed_dim=embed_size,
+        depths=depths,
+        num_heads=num_heads,
+        include_rescaling=include_rescaling,
+    )
+
+    if not include_top:
+        return backbone
+
+    inputs = backbone.input
+    x = backbone(inputs)
+    x = pooling_layer(x)
+    outputs = keras.layers.Dense(
+        num_classes,
+        activation=activation,
+        name="predictions",
+        dtype="float32",
+    )(x)
+
+    return keras.Model(inputs, outputs, name='mVideoSwinT')
+    
 
 @keras.utils.register_keras_serializable(package="swin.transformer.tiny.3d")
 class VideoSwinT(keras.Model):
