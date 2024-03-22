@@ -57,7 +57,6 @@ class VideoSwinT(keras.Model):
             dtype="float32",
         )(x)
         super().__init__(inputs=inputs, outputs=outputs, **kwargs)
-        self.backbone = backbone
         self.window_size = window_size
         self.num_classes = num_classes
         self.pooling = pooling
@@ -70,7 +69,6 @@ class VideoSwinT(keras.Model):
 
     def get_config(self):
         config = {
-            "backbone": keras.layers.serialize(self.backbone),
             "input_shape": self.input_shape[1:],
             "window_size": self.window_size,
             "num_classes": self.num_classes,
@@ -134,7 +132,6 @@ class VideoSwinS(keras.Model):
             dtype="float32",
         )(x)
         super().__init__(inputs=inputs, outputs=outputs, **kwargs)
-        self.backbone = backbone
         self.window_size = window_size
         self.num_classes = num_classes
         self.pooling = pooling
@@ -147,7 +144,6 @@ class VideoSwinS(keras.Model):
 
     def get_config(self):
         config = {
-            "backbone": keras.layers.serialize(self.backbone),
             "input_shape": self.input_shape[1:],
             "window_size": self.window_size,
             "num_classes": self.num_classes,
@@ -210,7 +206,6 @@ class VideoSwinB(keras.Model):
             dtype="float32",
         )(x)
         super().__init__(inputs=inputs, outputs=outputs, **kwargs)
-        self.backbone = backbone
         self.window_size = window_size
         self.num_classes = num_classes
         self.pooling = pooling
@@ -223,7 +218,6 @@ class VideoSwinB(keras.Model):
 
     def get_config(self):
         config = {
-            "backbone": keras.layers.serialize(self.backbone),
             "input_shape": self.input_shape[1:],
             "window_size": self.window_size,
             "num_classes": self.num_classes,

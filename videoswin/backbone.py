@@ -114,7 +114,7 @@ class VideoSwinBackbone(keras.Model):
             patch_size=patch_size,
             embed_dim=embed_dim,
             norm_layer=norm_layer if patch_norm else None,
-            name="videoswin_patching_and_embedding",
+            name="patching_and_embedding",
         )(x)
         x = layers.Dropout(drop_rate, name="pos_drop")(x)
 
@@ -138,7 +138,7 @@ class VideoSwinBackbone(keras.Model):
             )
             x = layer(x)
 
-        x = norm_layer(axis=-1, epsilon=1e-05, name="videoswin_top_norm")(x)
+        x = norm_layer(axis=-1, epsilon=1e-05, name="top_norm")(x)
         super().__init__(inputs=input_spec, outputs=x, **kwargs)
 
         self.include_rescaling = include_rescaling
