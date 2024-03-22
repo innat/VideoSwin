@@ -56,7 +56,7 @@ class VideoSwinT(keras.Model):
             name="predictions",
             dtype="float32",
         )(x)
-        super().__init__(inputs=inputs, outputs=outputs, **kwargs)
+        super().__init__(inputs=inputs, outputs=outputs, name='VideoSwinT', **kwargs)
         self.window_size = window_size
         self.num_classes = num_classes
         self.pooling = pooling
@@ -131,7 +131,7 @@ class VideoSwinS(keras.Model):
             name="predictions",
             dtype="float32",
         )(x)
-        super().__init__(inputs=inputs, outputs=outputs, **kwargs)
+        super().__init__(inputs=inputs, outputs=outputs, name='VideoSwinS', **kwargs)
         self.window_size = window_size
         self.num_classes = num_classes
         self.pooling = pooling
@@ -205,7 +205,7 @@ class VideoSwinB(keras.Model):
             name="predictions",
             dtype="float32",
         )(x)
-        super().__init__(inputs=inputs, outputs=outputs, **kwargs)
+        super().__init__(inputs=inputs, outputs=outputs, name='VideoSwinB', **kwargs)
         self.window_size = window_size
         self.num_classes = num_classes
         self.pooling = pooling
