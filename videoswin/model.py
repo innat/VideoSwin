@@ -17,6 +17,7 @@ class VideoSwinT(keras.Model):
         num_classes=400,
         pooling="avg",
         activation="softmax",
+        window_size=(8,7,7),
         embed_size=96,
         depths=[2, 2, 6, 2],
         num_heads=[3, 6, 12, 24],
@@ -36,6 +37,7 @@ class VideoSwinT(keras.Model):
 
         backbone = VideoSwinBackbone(
             input_shape=input_shape,
+            window_size=window_size,
             embed_dim=embed_size,
             depths=depths,
             num_heads=num_heads,
@@ -56,6 +58,7 @@ class VideoSwinT(keras.Model):
         )(x)
         super().__init__(inputs=inputs, outputs=outputs, **kwargs)
         self.backbone = backbone
+        self.window_size = window_size
         self.num_classes = num_classes
         self.pooling = pooling
         self.activation = activation
@@ -69,6 +72,7 @@ class VideoSwinT(keras.Model):
         config = {
             "backbone": keras.layers.serialize(self.backbone),
             "input_shape": self.input_shape[1:],
+            "window_size": self.window_size,
             "num_classes": self.num_classes,
             "pooling": self.pooling,
             "activation": self.activation,
@@ -90,6 +94,7 @@ class VideoSwinS(keras.Model):
         num_classes=400,
         pooling="avg",
         activation="softmax",
+        window_size=(8,7,7),
         embed_size=96,
         depths=[2, 2, 18, 2],
         num_heads=[3, 6, 12, 24],
@@ -109,6 +114,7 @@ class VideoSwinS(keras.Model):
 
         backbone = VideoSwinBackbone(
             input_shape=input_shape,
+            window_size=window_size,
             embed_dim=embed_size,
             depths=depths,
             num_heads=num_heads,
@@ -129,6 +135,7 @@ class VideoSwinS(keras.Model):
         )(x)
         super().__init__(inputs=inputs, outputs=outputs, **kwargs)
         self.backbone = backbone
+        self.window_size = window_size
         self.num_classes = num_classes
         self.pooling = pooling
         self.activation = activation
@@ -142,6 +149,7 @@ class VideoSwinS(keras.Model):
         config = {
             "backbone": keras.layers.serialize(self.backbone),
             "input_shape": self.input_shape[1:],
+            "window_size": self.window_size,
             "num_classes": self.num_classes,
             "pooling": self.pooling,
             "activation": self.activation,
@@ -162,6 +170,7 @@ class VideoSwinB(keras.Model):
         num_classes=400,
         pooling="avg",
         activation="softmax",
+        window_size=(8,7,7),
         embed_size=128,
         depths=[2, 2, 18, 2],
         num_heads=[4, 8, 16, 32],
@@ -182,6 +191,7 @@ class VideoSwinB(keras.Model):
         backbone = VideoSwinBackbone(
             input_shape=input_shape,
             embed_dim=embed_size,
+            window_size=window_size,
             depths=depths,
             num_heads=num_heads,
             include_rescaling=include_rescaling,
@@ -201,6 +211,7 @@ class VideoSwinB(keras.Model):
         )(x)
         super().__init__(inputs=inputs, outputs=outputs, **kwargs)
         self.backbone = backbone
+        self.window_size = window_size
         self.num_classes = num_classes
         self.pooling = pooling
         self.activation = activation
@@ -214,6 +225,7 @@ class VideoSwinB(keras.Model):
         config = {
             "backbone": keras.layers.serialize(self.backbone),
             "input_shape": self.input_shape[1:],
+            "window_size": self.window_size,
             "num_classes": self.num_classes,
             "pooling": self.pooling,
             "activation": self.activation,
