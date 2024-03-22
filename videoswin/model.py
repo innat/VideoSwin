@@ -80,7 +80,6 @@ class VideoSwinT(keras.Model):
             "include_rescaling": self.include_rescaling,
             "include_top": self.include_top,
         }
-
         return config
 
 
