@@ -126,6 +126,7 @@ class VideoSwinS(keras.Model):
             dtype="float32",
         )(x)
         super().__init__(inputs=inputs, outputs=outputs, **kwargs)
+        self.backbone = backbone
         self.num_classes = num_classes
         self.pooling = pooling
         self.activation = activation
@@ -137,6 +138,7 @@ class VideoSwinS(keras.Model):
 
     def get_config(self):
         config = {
+            "backbone": keras.layers.serialize(self.backbone),
             "input_shape": self.input_shape[1:],
             "num_classes": self.num_classes,
             "pooling": self.pooling,
