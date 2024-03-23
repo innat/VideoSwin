@@ -20,17 +20,17 @@ id,name
 18,Holding something in front of something
 19,Holding something next to something
 20,Holding something over something
-21,Laying something on the table on its side, not upright
+21,Laying something on the table on its side
 22,Letting something roll along a flat surface
 23,Letting something roll down a slanted surface
-24,Letting something roll up a slanted surface, so it rolls back down
+24,Letting something roll up a slanted surface
 25,Lifting a surface with something on it but not enough for it to slide down
 26,Lifting a surface with something on it until it starts sliding down
 27,Lifting something up completely without letting it drop down
-28,Lifting something up completely, then letting it drop down
+28,Lifting something up completely
 29,Lifting something with something on it
 30,Lifting up one end of something without letting it drop down
-31,Lifting up one end of something, then letting it drop down
+31,Lifting up one end of something
 32,Moving away from something with your camera
 33,Moving part of something
 34,Moving something across a surface until it falls down
@@ -69,7 +69,7 @@ id,name
 67,Pretending to open something without actually opening it
 68,Pretending to pick something up
 69,Pretending to poke something
-70,Pretending to pour something out of something, but something is empty
+70,Pretending to pour something out of something
 71,Pretending to put something behind something
 72,Pretending to put something into something
 73,Pretending to put something next to something
@@ -114,13 +114,13 @@ id,name
 112,Putting something onto something
 113,Putting something onto something else that cannot support it so it falls down
 114,Putting something similar to other things that are already on the table
-115,Putting something that can't roll onto a slanted surface, so it slides down
-116,Putting something that can't roll onto a slanted surface, so it stays where it is
-117,Putting something that cannot actually stand upright upright on the table, so it falls on its side
+115,Putting something that can't roll onto a slanted surface
+116,Putting something that can't roll onto a slanted surface
+117,Putting something that cannot actually stand upright upright on the table
 118,Putting something underneath something
 119,Putting something upright on the table
-120,Putting something, something and something on the table
-121,Removing something, revealing something behind
+120,Putting something
+121,Removing something
 122,Rolling something on a flat surface
 123,Scooping something up with something
 124,Showing a photo of something to the camera
@@ -158,11 +158,11 @@ id,name
 156,Tilting something with something on it slightly so it doesn't fall down
 157,Tilting something with something on it until it falls off
 158,Tipping something over
-159,Tipping something with something in it over, so something in it falls out
+159,Tipping something with something in it over
 160,Touching (without moving) part of something
 161,Trying but failing to attach something to something because it doesn't stick
 162,Trying to bend something unbendable so nothing happens
-163,Trying to pour something into something, but missing so it spills next to it
+163,Trying to pour something into something
 164,Turning something upside down
 165,Turning the camera downwards while filming something
 166,Turning the camera left while filming something
