@@ -26,18 +26,22 @@ class VideoSwinPatchingAndEmbedding(keras.Model):
         self.embed_dim = embed_dim
         self.norm_layer = norm_layer
 
-    def _compute_padding(self, dim, patch_size):
+    def __compute_padding(self, dim, patch_size):
         pad_amount = patch_size - (dim % patch_size)
         return [0, pad_amount if pad_amount != patch_size else 0]
 
     def build(self, input_shape):
         self.pads = [
             [0, 0],
-            self._compute_padding(input_shape[1], self.patch_size[0]),
-            self._compute_padding(input_shape[2], self.patch_size[1]),
-            self._compute_padding(input_shape[3], self.patch_size[2]),
+            self.__compute_padding(input_shape[1], self.patch_size[0]),
+            self.__compute_padding(input_shape[2], self.patch_size[1]),
+            self.__compute_padding(input_shape[3], self.patch_size[2]),
             [0, 0],
         ]
+
+        if self.norm_layer is not None:
+            self.norm = self.norm_layer(axis=-1, epsilon=1e-5, name="embed_norm")
+            self.norm.build((None, None, None, None, self.embed_dim))
 
         self.proj = layers.Conv3D(
             self.embed_dim,
@@ -46,18 +50,13 @@ class VideoSwinPatchingAndEmbedding(keras.Model):
             name="embed_proj",
         )
         self.proj.build((None, None, None, None, input_shape[-1]))
-
-        self.norm = None
-        if self.norm_layer is not None:
-            self.norm = self.norm_layer(axis=-1, epsilon=1e-5, name="embed_norm")
-            self.norm.build((None, None, None, None, self.embed_dim))
         self.built = True
 
     def call(self, x):
         x = ops.pad(x, self.pads)
         x = self.proj(x)
 
-        if self.norm is not None:
+        if self.norm_layer is not None:
             x = self.norm(x)
 
         return x

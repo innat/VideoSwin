@@ -21,7 +21,7 @@ class VideoSwinBasicLayer(keras.Model):
         attn_drop (float, optional): Attention dropout rate. Default: 0.0
         drop_path (float | tuple[float], optional): Stochastic depth rate. Default: 0.0
         norm_layer (keras.layers, optional): Normalization layer. Default: LayerNormalization
-        downsample (keras.layers | None, optional): Downsample layer at the end of the layer. Default: None
+        downsampling_layer (keras.layers | None, optional): Downsample layer at the end of the layer. Default: None
 
     References:
         - [Video Swin Transformer](https://arxiv.org/abs/2106.13230)
@@ -41,7 +41,7 @@ class VideoSwinBasicLayer(keras.Model):
         attn_drop_rate=0.0,
         drop_path_rate=0.0,
         norm_layer=None,
-        downsample=None,
+        downsampling_layer=None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -57,26 +57,26 @@ class VideoSwinBasicLayer(keras.Model):
         self.attn_drop_rate = attn_drop_rate
         self.drop_path_rate = drop_path_rate
         self.norm_layer = norm_layer
-        self.downsample = downsample
+        self.downsampling_layer = downsampling_layer
 
-    def _compute_dim_padded(self, input_dim, window_dim_size):
+    def __compute_dim_padded(self, input_dim, window_dim_size):
         input_dim = ops.cast(input_dim, dtype="float32")
         window_dim_size = ops.cast(window_dim_size, dtype="float32")
         return ops.cast(
-            ops.ceil(input_dim / window_dim_size) * window_dim_size, "int32"
+            ops.ceil(input_dim / window_dim_size) * window_dim_size, dtype="int32"
         )
 
     def build(self, input_shape):
         self.window_size, self.shift_size = get_window_size(
             input_shape[1:-1], self.window_size, self.shift_size
         )
-        self.depth_pad = self._compute_dim_padded(input_shape[1], self.window_size[0])
-        self.height_pad = self._compute_dim_padded(input_shape[2], self.window_size[1])
-        self.width_pad = self._compute_dim_padded(input_shape[3], self.window_size[2])
+        depth_pad = self.__compute_dim_padded(input_shape[1], self.window_size[0])
+        height_pad = self.__compute_dim_padded(input_shape[2], self.window_size[1])
+        width_pad = self.__compute_dim_padded(input_shape[3], self.window_size[2])
         self.attn_mask = compute_mask(
-            self.depth_pad,
-            self.height_pad,
-            self.width_pad,
+            depth_pad,
+            height_pad,
+            width_pad,
             self.window_size,
             self.shift_size,
         )
@@ -103,8 +103,8 @@ class VideoSwinBasicLayer(keras.Model):
             for i in range(self.depth)
         ]
 
-        if self.downsample is not None:
-            self.downsample = self.downsample(
+        if self.downsampling_layer is not None:
+            self.downsample = self.downsampling_layer(
                 input_dim=self.input_dim, norm_layer=self.norm_layer
             )
             self.downsample.build(input_shape)
@@ -129,25 +129,13 @@ class VideoSwinBasicLayer(keras.Model):
 
         x = ops.reshape(x, [batch_size, depth, height, width, channel])
 
-        if self.downsample is not None:
+        if self.downsampling_layer is not None:
             x = self.downsample(x)
 
         return x
     
     def compute_output_shape(self, input_shape):
-        if self.downsample is not None:
-            # TODO: remove tensorflow dependencies.
-            # GitHub issue: https://github.com/keras-team/keras/issues/19259 # noqa: E501
-            # output_shape = tf.TensorShape(
-            #     [
-            #         input_shape[0],
-            #         self.depth_pad,
-            #         self.height_pad // 2,
-            #         self.width_pad // 2,
-            #         2 * self.input_dim,
-            #     ]
-            # )
-
+        if self.downsampling_layer is not None:
             output_shape = self.downsample.compute_output_shape(input_shape)
             return output_shape 
 
