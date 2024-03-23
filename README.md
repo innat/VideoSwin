@@ -88,7 +88,6 @@ model.fit(...)
 model.predict(...)
 ```
 
-
 ##  Citation
 
 If you use this videoswin implementation in your research, please cite it using the metadata from our `CITATION.cff` file.
