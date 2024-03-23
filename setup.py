@@ -14,7 +14,7 @@ setup(
     keywords=["deep learning", "image retrieval", "image recognition"],
     install_requires=[
         "opencv-python>=4.1.2",
-        "keras",
+        "keras==3.0.5",
         "tensorflow-datasets",
     ],
     extras_require={
