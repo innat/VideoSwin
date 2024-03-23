@@ -88,38 +88,6 @@ model.fit(...)
 model.predict(...)
 ```
 
-## Model Zoo
-
-The 3D swin-video checkpoints are listed in [`MODEL_ZOO.md`](MODEL_ZOO.md). Following are some hightlights.
-
-### Kinetics 400
-
-In the training phase, the video swin mdoels are initialized with the pretrained weights of image swin models. In that case, `IN` referes to **ImageNet**.
-
-| Backbone |  Pretrain  | Top-1 | Top-5 | #params | FLOPs | config |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | 
-|  Swin-T  | IN-1K |  78.8  |  93.6  |   28M   |  ?   |  [swin-t](https://github.com/SwinTransformer/Video-Swin-Transformer/blob/master/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py)  |
-|  Swin-S  | IN-1K |  80.6  |  94.5  |   50M   |  ?  |  [swin-s](https://github.com/SwinTransformer/Video-Swin-Transformer/blob/master/configs/recognition/swin/swin_small_patch244_window877_kinetics400_1k.py)  |
-|  Swin-B  | IN-1K |  80.6  |  94.6  |   88M   |  ?  |  [swin-b](https://github.com/SwinTransformer/Video-Swin-Transformer/blob/master/configs/recognition/swin/swin_base_patch244_window877_kinetics400_1k.py)  |
-|  Swin-B  | IN-22K | 82.7  |  95.5  |   88M   |  ?  |  [swin-b](https://github.com/SwinTransformer/Video-Swin-Transformer/blob/master/configs/recognition/swin/swin_base_patch244_window877_kinetics400_22k.py)  |
-
-### Kinetics 600
-
-| Backbone |  Pretrain   | Top-1 | Top-5 | #params | FLOPs | config |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | 
-|  Swin-B  | IN-22K | 84.0  |  96.5  |   88M   |  ?  |  [swin-b](https://github.com/SwinTransformer/Video-Swin-Transformer/blob/master/configs/recognition/swin/swin_base_patch244_window877_kinetics600_22k.py)  | 
-
-### Something-Something V2
-
-| Backbone |  Pretrain   |  Top-1 | Top-5 | #params | FLOPs | config |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | 
-|  Swin-B  | Kinetics 400 |  69.6  |  92.7  |   89M   |  ?  |  [swin-b](https://github.com/SwinTransformer/Video-Swin-Transformer/blob/master/configs/recognition/swin/swin_base_patch244_window1677_sthv2.py)  |
-
-
-# TODO
-- [x] Custom fine-tuning code.
-- [ ] Publish on TF-Hub.
-- [ ] Support `Keras V3` to support multi-framework backend.
 
 ##  Citation
 
