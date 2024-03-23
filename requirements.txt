@@ -1,2 +1,23 @@
-tensorflow>=2.12
-opencv-python>=4.1.2
+# Tensorflow.
+tensorflow-cpu==2.16.1
+
+# Torch.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.1.0
+torchvision>=0.16.0
+
+# Jax.
+jax[cpu]
+
+# others
+absl-py
+regex
+pandas
+tensorflow-datasets
+packaging
+flake8
+isort
+black
+pytest
+build
+namex

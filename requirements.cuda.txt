@@ -1,0 +1,24 @@
+# Tensorflow.
+tensorflow[and-cuda]~=2.16.1
+
+# Torch.
+--extra-index-url https://download.pytorch.org/whl/cu121
+torch==2.2.1+cu121
+torchvision==0.17.1+cu121
+
+# Jax.
+--find-links https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+jax[cuda12_pip]==0.4.23
+
+# others
+absl-py
+regex
+pandas
+tensorflow-datasets
+packaging
+flake8
+isort
+black
+pytest
+build
+namex

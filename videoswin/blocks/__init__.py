@@ -1,3 +1,2 @@
-
-from .swin_transformer import TFSwinTransformerBlock3D
-from .basic import TFBasicLayer
+from .basic import VideoSwinBasicLayer  # noqa: E501
+from .swin_transformer import VideoSwinTransformerBlock  # noqa: E501

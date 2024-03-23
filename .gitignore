@@ -6,6 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+# Ignore large file
+*.h5
+*.weights.h5
+*.keras
+
 # Distribution / packaging
 .Python
 build/

@@ -1,196 +1,238 @@
+import keras
+from keras import layers, ops
 
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
+from ..layers import MLP, DropPath, VideoSwinWindowAttention
+from ..utils import get_window_size, window_partition, window_reverse
 
-from ..layers import TFMlp
-from ..layers import TFWindowAttention3D
-from ..layers import TFDropPath
-from ..utils import get_window_size
-from ..utils import tf_window_partition
-from ..utils import tf_window_reverse
 
-class TFSwinTransformerBlock3D(keras.Model):
-    """ Swin Transformer Block.
+class VideoSwinTransformerBlock(keras.Model):
+    """Video Swin Transformer Block.
 
     Args:
-        dim (int): Number of input channels.
+        input_dim (int): Number of feature channels.
         num_heads (int): Number of attention heads.
-        window_size (tuple[int]): Window size.
-        shift_size (tuple[int]): Shift size for SW-MSA.
+        window_size (tuple[int]): Local window size. Default: (2, 7, 7)
+        shift_size (tuple[int]): Shift size for SW-MSA. Default: (0, 0, 0)
         mlp_ratio (float): Ratio of mlp hidden dim to embedding dim.
-        qkv_bias (bool, optional): If True, add a learnable bias to query, key, value. Default: True
+            Default: 4.0
+        qkv_bias (bool, optional): If True, add a learnable bias to query, key, value.
+            Default: True
         qk_scale (float | None, optional): Override default qk scale of head_dim ** -0.5 if set.
+            Default: None
         drop (float, optional): Dropout rate. Default: 0.0
-        attn_drop (float, optional): Attention dropout rate. Default: 0.0
+        attn_drop (float, optionalc): Attention dropout rate. Default: 0.0
         drop_path (float, optional): Stochastic depth rate. Default: 0.0
         act_layer (keras.layers.Activation, optional): Activation layer. Default: gelu
-        norm_layer (keras.layers, optional): Normalization layer.  Default: LayerNormalization
-    """
-    
+        norm_layer (keras.layers, optional): Normalization layer.
+            Default: LayerNormalization
+
+    References:
+        - [Video Swin Transformer](https://arxiv.org/abs/2106.13230)
+        - [Video Swin Transformer GitHub](https://github.com/SwinTransformer/Video-Swin-Transformer)
+    """  # noqa: E501
+
     def __init__(
-        self, 
-        dim, 
-        num_heads, 
-        window_size=(2, 7, 7), 
+        self,
+        input_dim,
+        num_heads,
+        window_size=(2, 7, 7),
         shift_size=(0, 0, 0),
-        mlp_ratio=4., 
-        qkv_bias=True, 
-        qk_scale=None, 
-        drop=0., 
-        attn_drop=0., 
-        drop_path=0.,
-        act_layer=layers.Activation('gelu'), 
-        norm_layer=layers.LayerNormalization, 
-        **kwargs
+        mlp_ratio=4.0,
+        qkv_bias=True,
+        qk_scale=None,
+        drop_rate=0.0,
+        attn_drop_rate=0.0,
+        drop_path_rate=0.0,
+        activation="gelu",
+        norm_layer=layers.LayerNormalization,
+        **kwargs,
     ):
         super().__init__(**kwargs)
-        self.dim = dim
+        # variables
+        self.input_dim = input_dim
         self.num_heads = num_heads
         self.window_size = window_size
         self.shift_size = shift_size
         self.mlp_ratio = mlp_ratio
-        mlp_hidden_dim = int(dim * mlp_ratio)
-        
-        assert 0 <= self.shift_size[0] < self.window_size[0], "shift_size must in 0-window_size"
-        assert 0 <= self.shift_size[1] < self.window_size[1], "shift_size must in 0-window_size"
-        assert 0 <= self.shift_size[2] < self.window_size[2], "shift_size must in 0-window_size"
-        
-        # layers
-        self.norm1 = norm_layer(axis=-1, epsilon=1e-05)
-        self.attn = TFWindowAttention3D(
-            dim, 
-            window_size=window_size, 
-            num_heads=num_heads, 
-            qkv_bias=qkv_bias, 
-            qk_scale=qk_scale, 
-            attn_drop=attn_drop,
-            proj_drop=drop
-        )
-        self.drop_path = TFDropPath(drop_path) if drop_path > 0. else layers.Identity()  
-        self.norm2 = norm_layer(axis=-1, epsilon=1e-05)
-        self.mlp = TFMlp(
-            in_features=dim, 
-            hidden_features=mlp_hidden_dim, 
-            act_layer=act_layer, 
-            drop=drop
-        )
-        
+        self.qkv_bias = qkv_bias
+        self.qk_scale = qk_scale
+        self.drop_rate = drop_rate
+        self.attn_drop_rate = attn_drop_rate
+        self.drop_path_rate = drop_path_rate
+        self.mlp_hidden_dim = int(input_dim * mlp_ratio)
+        self.norm_layer = norm_layer
+        self._activation_identifier = activation
+
+        for i, (shift, window) in enumerate(zip(self.shift_size, self.window_size)):
+            if not (0 <= shift < window):
+                raise ValueError(
+                    f"shift_size[{i}] must be in the range 0 to less than "
+                    f"window_size[{i}], but got shift_size[{i}]={shift} "
+                    f"and window_size[{i}]={window}."
+                )
+
     def build(self, input_shape):
         self.window_size, self.shift_size = get_window_size(
             input_shape[1:-1], self.window_size, self.shift_size
         )
-        if any(i > 0 for i in self.shift_size):
-            self.roll = True
-        else:
-            self.roll = False
-        
-        super().build(input_shape)
-        
 
-    def first_forward(self, x, mask_matrix, return_attns, training):
-        input_shape = tf.shape(x)
-        B,D,H,W,C = (
-            input_shape[0], 
+        self.apply_cyclic_shift = False
+        if any(i > 0 for i in self.shift_size):
+            self.apply_cyclic_shift = True
+
+        # layers
+        self.drop_path = (
+            DropPath(self.drop_path_rate)
+            if self.drop_path_rate > 0.0
+            else layers.Identity()
+        )
+
+        self.norm1 = self.norm_layer(axis=-1, epsilon=1e-05)
+        self.norm1.build(input_shape)
+
+        self.attn = VideoSwinWindowAttention(
+            self.input_dim,
+            window_size=self.window_size,
+            num_heads=self.num_heads,
+            qkv_bias=self.qkv_bias,
+            qk_scale=self.qk_scale,
+            attn_drop_rate=self.attn_drop_rate,
+            proj_drop_rate=self.drop_rate,
+        )
+        self.attn.build((None, None, self.input_dim))
+
+        self.norm2 = self.norm_layer(axis=-1, epsilon=1e-05)
+        self.norm2.build((*input_shape[:-1], self.input_dim))
+
+        self.mlp = MLP(
+            output_dim=self.input_dim,
+            hidden_dim=self.mlp_hidden_dim,
+            activation=self._activation_identifier,
+            drop_rate=self.drop_rate,
+        )
+        self.mlp.build((*input_shape[:-1], self.input_dim))
+
+        # compute padding if needed.
+        # pad input feature maps to multiples of window size.
+        _, depth, height, width, _ = input_shape
+        pad_l = pad_t = pad_d0 = 0
+        self.pad_d1 = ops.mod(-depth + self.window_size[0], self.window_size[0])
+        self.pad_b = ops.mod(-height + self.window_size[1], self.window_size[1])
+        self.pad_r = ops.mod(-width + self.window_size[2], self.window_size[2])
+        self.pads = [
+            [0, 0],
+            [pad_d0, self.pad_d1],
+            [pad_t, self.pad_b],
+            [pad_l, self.pad_r],
+            [0, 0],
+        ]
+        self.built = True
+
+    def first_forward(self, x, mask_matrix, training):
+        input_shape = ops.shape(x)
+        batch_size, depth, height, width, _ = (
+            input_shape[0],
             input_shape[1],
             input_shape[2],
             input_shape[3],
             input_shape[4],
         )
-        window_size, shift_size = self.window_size, self.shift_size
         x = self.norm1(x)
-        
-        # pad feature maps to multiples of window size
-        pad_l  = pad_t = pad_d0 = 0
-        pad_d1 = tf.math.floormod(-D + window_size[0], window_size[0])
-        pad_b  = tf.math.floormod(-H + window_size[1], window_size[1])
-        pad_r  = tf.math.floormod(-W + window_size[2], window_size[2])
-        paddings = [[0, 0], [pad_d0, pad_d1], [pad_t, pad_b], [pad_l, pad_r], [0, 0]]
-        x = tf.pad(x, paddings)
-        
-        input_shape = tf.shape(x)
-        Dp, Hp, Wp =  (
+
+        # apply padding if needed.
+        x = ops.pad(x, self.pads)
+
+        input_shape = ops.shape(x)
+        depth_pad, height_pad, width_pad = (
             input_shape[1],
             input_shape[2],
             input_shape[3],
         )
-        
-        # Cyclic Shift
-        if self.roll:
-            shifted_x = tf.roll(
-                x, 
-                shift=(-shift_size[0], -shift_size[1], -shift_size[2]), 
-                axis=(1, 2, 3)
+
+        # cyclic shift
+        if self.apply_cyclic_shift:
+            shifted_x = ops.roll(
+                x,
+                shift=(
+                    -self.shift_size[0],
+                    -self.shift_size[1],
+                    -self.shift_size[2],
+                ),
+                axis=(1, 2, 3),
             )
             attn_mask = mask_matrix
         else:
             shifted_x = x
             attn_mask = None
-        
+
         # partition windows
-        x_windows = tf_window_partition(shifted_x, window_size) 
-        
+        x_windows = window_partition(shifted_x, self.window_size)
+
         # get attentions params
-        if return_attns:
-            attn_windows, attn_scores = self.attn(
-                x_windows, mask=attn_mask, return_attns=return_attns, training=training
-            )
-        else:
-             attn_windows = self.attn(
-                x_windows, mask=attn_mask, training=training
-            ) 
+        attn_windows = self.attn(x_windows, mask=attn_mask, training=training)
 
         # reverse the swin windows
-        shifted_x = tf_window_reverse(
-            attn_windows, window_size, B, Dp, Hp, Wp
-        ) 
+        shifted_x = window_reverse(
+            attn_windows,
+            self.window_size,
+            batch_size,
+            depth_pad,
+            height_pad,
+            width_pad,
+        )
 
-        # Reverse Cyclic Shift
-        if self.roll:
-            x = tf.roll(
-                shifted_x, 
-                shift=(shift_size[0], shift_size[1], shift_size[2]), 
-                axis=(1, 2, 3)
+        # reverse cyclic shift
+        if self.apply_cyclic_shift:
+            x = ops.roll(
+                shifted_x,
+                shift=(
+                    self.shift_size[0],
+                    self.shift_size[1],
+                    self.shift_size[2],
+                ),
+                axis=(1, 2, 3),
             )
         else:
             x = shifted_x
 
-        # pad if required    
-        do_pad = tf.logical_or(
-            tf.greater(pad_d1, 0),
-            tf.logical_or(tf.greater(pad_r, 0), tf.greater(pad_b, 0))
+        # pad if required
+        do_pad = ops.logical_or(
+            ops.greater(self.pad_d1, 0),
+            ops.logical_or(ops.greater(self.pad_r, 0), ops.greater(self.pad_b, 0)),
         )
-        x = tf.cond(
-            do_pad, 
-            lambda: x[:, :D, :H, :W, :], 
-            lambda: x
-        )
+        x = ops.cond(do_pad, lambda: x[:, :depth, :height, :width, :], lambda: x)
 
-        if return_attns:
-            return x, attn_scores
-        
         return x
 
     def second_forward(self, x, training):
-        return self.drop_path(
-            self.mlp(self.norm2(x)), training=training
-        )
+        x = self.norm2(x)
+        x = self.mlp(x)
+        x = self.drop_path(x, training=training)
+        return x
 
-    def call(self, x, mask_matrix=None, return_attns=False, training=None):
-        
+    def call(self, x, mask_matrix=None, training=None):
         shortcut = x
-        x = self.first_forward(
-            x, mask_matrix, return_attns, training
-        )
-        
-        if return_attns:
-            x, attn_scores = x
-
+        x = self.first_forward(x, mask_matrix, training)
         x = shortcut + self.drop_path(x)
         x = x + self.second_forward(x, training)
-        
-        if return_attns:
-            return x, attn_scores
-        
         return x
-    
+
+    def get_config(self):
+        config = super().get_config()
+        config.update(
+            {
+                "input_dim": self.input_dim,
+                "window_size": self.num_heads,
+                "num_heads": self.window_size,
+                "shift_size": self.shift_size,
+                "mlp_ratio": self.mlp_ratio,
+                "qkv_bias": self.qkv_bias,
+                "qk_scale": self.qk_scale,
+                "drop_rate": self.drop_rate,
+                "attn_drop_rate": self.attn_drop_rate,
+                "drop_path_rate": self.drop_path_rate,
+                "mlp_hidden_dim": self.mlp_hidden_dim,
+                "activation": self._activation_identifier,
+            }
+        )
+        return config
