@@ -1,37 +1,42 @@
 
 # Video Swin Transformer Model Zoo
 
-Video Swin in `keras` can be used with multiple backends, i.e. `tensorflow`, `torch`, and `jax`.
+Video Swin in `keras` can be used with multiple backends, i.e. `tensorflow`, `torch`, and `jax`. The input shape are expected to be `channel_last`, i.e. `(depth, height, width, channel)`.
 
 ## Note
 
+While evaluating the video model for classification task, multiple clips from a video are sampled. This process also involves multiple crops on the sample. 
+
 - `#Frame = #input_frame x #clip x #crop`. The frame interval is `2` to evaluate on benchmark dataset. 
-- `#input_frame` means how many frames are input for model during the test phase.
+- `#input_frame` means how many frames are input for model during the test phase. For video swin, it is `32`.
 - `#crop` means spatial crops (e.g., 3 for left/right/center crop).
 - `#clip` means temporal clips (e.g., 5 means repeted temporal sampling five clips with different start indices).
 
+
+# Checkpoints
+
+In the training phase, the video swin mdoels are initialized with the pretrained weights of image swin models. In that case, `IN` referes to **ImageNet**. In the following, the `keras` checkpoints are the complete model, so `keras.saving.load_model` API can be used. In contrast, the `h5` checkpoints are the only weight file.
+
 ### Kinetics 400
 
-In the training phase, the video swin mdoels are initialized with the pretrained weights of image swin models. In that case, `IN` referes to **ImageNet**.
-
-| Backbone |  Pretrain  | #Frame | Top-1 | Top-5 | Checkpoints |
-| :---: | :---: | :---: | :---: | :---: | :---: | 
-|  Swin-T  | IN-1K  | 32x4x3 | 78.8  |  93.6  |   [SavedModel](https://github.com/innat/VideoSwin/releases/download/v1.1/TFVideoSwinT_K400_IN1K_P244_W877_32x224.zip)/[h5](https://github.com/innat/VideoSwin/releases/download/v1.0/TFVideoSwinT_K400_IN1K_P244_W877_32x224.h5)  | 
-|  Swin-S  | IN-1K  | 32x4x3 | 80.6  |  94.5  |   [SavedModel](https://github.com/innat/VideoSwin/releases/download/v1.1/TFVideoSwinS_K400_IN1K_P244_W877_32x224.zip)/[h5](https://github.com/innat/VideoSwin/releases/download/v1.0/TFVideoSwinS_K400_IN1K_P244_W877_32x224.h5)  |
-|  Swin-B  | IN-1K  | 32x4x3 | 80.6  |  94.6  |   [SavedModel](https://github.com/innat/VideoSwin/releases/download/v1.1/TFVideoSwinB_K400_IN1K_P244_W877_32x224.zip)/[h5](https://github.com/innat/VideoSwin/releases/download/v1.0/TFVideoSwinB_K400_IN1K_P244_W877_32x224.h5)  | 
-|  Swin-B  | IN-22K | 32x4x3 | 82.7  |  95.5  |   [SavedModel](https://github.com/innat/VideoSwin/releases/download/v1.1/TFVideoSwinB_K400_IN22K_P244_W877_32x224.zip)/[h5](https://github.com/innat/VideoSwin/releases/download/v1.0/TFVideoSwinB_K400_IN22K_P244_W877_32x224.h5)   | 
+| Model |  Pretrain  | #Frame | Top-1 | Top-5 | Checkpoints | config |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | 
+|  Swin-T  | IN-1K  | 32x4x3 | 78.8  |  93.6  |   [keras]()/[h5]() | [swin-t](https://github.com/SwinTransformer/Video-Swin-Transformer/blob/master/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py)  |
+|  Swin-S  | IN-1K  | 32x4x3 | 80.6  |  94.5  |   [keras]()/[h5]() | [swin-s](https://github.com/SwinTransformer/Video-Swin-Transformer/blob/master/configs/recognition/swin/swin_small_patch244_window877_kinetics400_1k.py)  |
+|  Swin-B  | IN-1K  | 32x4x3 | 80.6  |  94.6  |   [keras]()/[h5]() | [swin-b](https://github.com/SwinTransformer/Video-Swin-Transformer/blob/master/configs/recognition/swin/swin_base_patch244_window877_kinetics400_1k.py)  |
+|  Swin-B  | IN-22K | 32x4x3 | 82.7  |  95.5  |   [keras]()/[h5]() | [swin-b](https://github.com/SwinTransformer/Video-Swin-Transformer/blob/master/configs/recognition/swin/swin_base_patch244_window877_kinetics400_22k.py)  |
 
 ### Kinetics 600
 
-| Backbone |  Pretrain  | #Frame | Top-1 | Top-5 | Checkpoints |
-| :---: | :---: | :---: | :---: | :---: | :---: | 
-|  Swin-B  | IN-22K | 32x4x3 | 84.0  |  96.5  |   [SavedModel](https://github.com/innat/VideoSwin/releases/download/v1.1/TFVideoSwinB_K600_IN22K_P244_W877_32x224.zip)/[h5](https://github.com/innat/VideoSwin/releases/download/v1.0/TFVideoSwinB_K600_IN22K_P244_W877_32x224.h5)  | 
+| Model |  Pretrain  | #Frame | Top-1 | Top-5 | Checkpoints | config |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | 
+|  Swin-B  | IN-22K | 32x4x3 | 84.0  |  96.5  |   [keras]()/[h5]()  |  [swin-b](https://github.com/SwinTransformer/Video-Swin-Transformer/blob/master/configs/recognition/swin/swin_base_patch244_window877_kinetics600_22k.py)  | 
 
 ### Something-Something V2
 
-| Backbone |  Pretrain  | #Frame | Top-1 | Top-5 | Checkpoints |
-| :---: | :---: | :---: | :---: | :---: | :---: | 
-|  Swin-B  | Kinetics 400 | 32x1x3 | 69.6  |  92.7  |  [SavedModel](https://github.com/innat/VideoSwin/releases/download/v1.1/TFVideoSwinB_SSV2_K400_P244_W1677_32x224.zip)/[h5](https://github.com/innat/VideoSwin/releases/download/v1.0/TFVideoSwinB_SSV2_K400_P244_W1677_32x224.h5)  | 
+| Model |  Pretrain  | #Frame | Top-1 | Top-5 | Checkpoints | config |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | 
+|  Swin-B  | Kinetics 400 | 32x1x3 | 69.6  |  92.7  |  [keras]()/[h5]()  |  [swin-b](https://github.com/SwinTransformer/Video-Swin-Transformer/blob/master/configs/recognition/swin/swin_base_patch244_window1677_sthv2.py)  |
 
 
 ## Weight Comparison
