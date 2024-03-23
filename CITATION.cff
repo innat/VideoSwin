@@ -14,9 +14,9 @@ authors:
 identifiers:
   - type: url
     value: 'https://github.com/innat/VideoSwin'
-    description: Keras implementation of VideoSwin
+    description: Keras 3 implementation of VideoSwin
 keywords:
   - software
-license: MIT
-version: 1.0.0
-date-released: '2023-10-19'
+license: Apache License
+version: 2.0.0
+date-released: '2024-03-25'
