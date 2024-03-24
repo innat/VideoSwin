@@ -9,6 +9,7 @@ import keras
 from videoswin.backbone import VideoSwinBackbone
 
 
+@keras.utils.register_keras_serializable(package="swin.transformer.tiny.3d")
 def VideoSwinT(
     input_shape=(32, 224, 224, 3),
     num_classes=400,
@@ -203,6 +204,7 @@ class VideoSwinS(keras.Model):
         return config
 
 
+@keras.utils.register_keras_serializable(package="swin.transformer.base.3d")
 def VideoSwinB(
     input_shape=(32, 224, 224, 3),
     num_classes=400,
