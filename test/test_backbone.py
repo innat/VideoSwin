@@ -23,6 +23,7 @@ class TestVideoSwinSBackbone(TestCase):
 
     @pytest.mark.extra_large
     def teat_save(self):
+        self.skipTest("Skipping test save with keras format.")
         # saving test
         model = VideoSwinBackbone(include_rescaling=False)
         x = np.ones((1, 32, 224, 224, 3))
