@@ -1,5 +1,5 @@
-from base import TestCase
 import keras
+from base import TestCase
 from keras import ops
 
 from videoswin.layers import (

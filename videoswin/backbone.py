@@ -133,7 +133,9 @@ class VideoSwinBackbone(keras.Model):
                 attn_drop_rate=attn_drop_rate,
                 drop_path_rate=dpr[sum(depths[:i]) : sum(depths[: i + 1])],
                 norm_layer=norm_layer,
-                downsampling_layer=(VideoSwinPatchMerging if (i < num_layers - 1) else None),
+                downsampling_layer=(
+                    VideoSwinPatchMerging if (i < num_layers - 1) else None
+                ),
                 name=f"videoswin_basic_layer_{i + 1}",
             )
             x = layer(x)

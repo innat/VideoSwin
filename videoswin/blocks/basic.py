@@ -132,11 +132,11 @@ class VideoSwinBasicLayer(keras.Model):
             x = self.downsample(x)
 
         return x
-    
+
     def compute_output_shape(self, input_shape):
         if self.downsampling_layer is not None:
             output_shape = self.downsample.compute_output_shape(input_shape)
-            return output_shape 
+            return output_shape
 
         return input_shape
 
@@ -157,4 +157,3 @@ class VideoSwinBasicLayer(keras.Model):
             }
         )
         return config
-    

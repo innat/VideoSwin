@@ -60,7 +60,7 @@ class VideoSwinPatchingAndEmbedding(keras.Model):
             x = self.norm(x)
 
         return x
-    
+
     def get_config(self):
         config = super().get_config()
         config.update(
