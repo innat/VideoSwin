@@ -148,7 +148,6 @@ class VideoSwinBasicLayer(keras.Model):
                 "window_size": self.window_size,
                 "num_heads": self.num_heads,
                 "mlp_ratio": self.mlp_ratio,
-                "shift_size": self.shift_size,
                 "depth": self.depth,
                 "qkv_bias": self.qkv_bias,
                 "qk_scale": self.qk_scale,
@@ -158,3 +157,4 @@ class VideoSwinBasicLayer(keras.Model):
             }
         )
         return config
+    
