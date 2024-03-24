@@ -16,21 +16,21 @@ This is a unofficial `Keras 3` implementation of [Video Swin transformers](https
 # Install 
 
 ```python
-git clone https://github.com/innat/VideoSwin.git
-cd VideoSwin
-pip install -e . 
+!git clone https://github.com/innat/VideoSwin.git
+%cd VideoSwin
+!pip install -e . 
 ```
 
 # Checkpoints
 
-The **VideoSwin** checkpoints are available in both `.weights.h5`, and `.keras` formats. The variants of this models are `tiny`, `small`, and `base`. Check [model zoo](https://github.com/innat/VideoSwin/blob/main/MODEL_ZOO.md) page to know details of it. 
+The **VideoSwin** checkpoints are available in both `.weights.h5`, and `.keras` formats for Kinetrics 400/600 and Something Something V2 datasets. Here, the `H5` format is the **weight** file and the `keras` format is the **weight + model architecture**. The variants of this models are `tiny`, `small`, and `base`. Check [model zoo](https://github.com/innat/VideoSwin/blob/main/MODEL_ZOO.md) page to know details of it. 
 
 
-**Inference**
+# Inference
+
+A sample usage is shown below. We can pick any backend, i.e. tensorflow, torch or jax.
 
 ```python
-from videoswin import VideoSwinT
-
 >>> import  os
 >>> import torch
 >>> os.environ["KERAS_BACKEND"] = "torch"
@@ -65,28 +65,14 @@ A classification results on a sample from [Kinetics-400](https://www.deepmind.co
 | ![](./assets/view1.gif) | <pre>{<br>    'playing_cello': 0.9941741824150085,<br>    'playing_violin': 0.0016851733671501279,<br>    'playing_recorder': 0.0011555481469258666,<br>    'playing_clarinet': 0.0009695519111119211,<br>    'playing_harp': 0.0007713600643910468<br>}</pre> |
 
 
-**Fine Tune**
+**Guides**
 
-Each videoswin checkpoints returns `logits`. We can just add a custom classifier on top of it. For example:
+- To ensure the keras reimplementation with official torch: [logit comparison](guides/video-swin-transformer-keras-and-torchvision.ipynb)
+- To train with tensorflow backend:
+- To trian with torch backend:
+- To train with jax backend:
+- To train with torch-lightening (torch backend):
 
-```python
-# import pretrained model, i.e.
-video_swin = keras.models.load_model(
-    'TFVideoSwinB_SSV2_K400_P244_W1677_32x224', compile=False
-    )
-video_swin.trainable = False
-
-# downstream model
-model = keras.Sequential([
-    video_swin,
-    layers.Dense(
-        len(class_folders), dtype='float32', activation=None
-    )
-])
-model.compile(...)
-model.fit(...)
-model.predict(...)
-```
 
 ##  Citation
 
