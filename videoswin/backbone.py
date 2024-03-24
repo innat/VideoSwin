@@ -68,7 +68,7 @@ class VideoSwinBackbone(keras.Model):
     def __init__(
         self,
         *,
-        include_rescaling,
+        include_rescaling=False,
         input_shape=(32, 224, 224, 3),
         input_tensor=None,
         embed_dim=96,
