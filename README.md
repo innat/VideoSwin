@@ -23,7 +23,7 @@ This is a unofficial `Keras 3` implementation of [Video Swin transformers](https
 
 # Checkpoints
 
-The **VideoSwin** checkpoints are available in `.weights.h5` for Kinetrics 400/600 and Something Something V2 datasets. The variants of this models are `tiny`, `small`, and `base`. Check [model zoo](https://github.com/innat/VideoSwin/blob/main/MODEL_ZOO.md) page to know details of it. 
+The **VideoSwin** checkpoints are available in `.weights.h5`format for Kinetrics 400/600 and Something Something V2 datasets. The variants of this models are `tiny`, `small`, and `base`. Check [model zoo](https://github.com/innat/VideoSwin/blob/main/MODEL_ZOO.md) page to know details of it. 
 
 
 # Inference
@@ -31,32 +31,31 @@ The **VideoSwin** checkpoints are available in `.weights.h5` for Kinetrics 400/6
 A sample usage is shown below. We can pick any backend, i.e. tensorflow, torch or jax.
 
 ```python
->>> import  os
->>> import torch
->>> os.environ["KERAS_BACKEND"] = "torch"
->>> from videoswin import VideoSwinT
+import  os
+os.environ["KERAS_BACKEND"] = "torch"
+import torch
+from videoswin import VideoSwinT
 
->>> model = VideoSwinT(
+model = VideoSwinT(
     num_classes=400,
     include_rescaling=False,
     activation=None
 )
->>> _ = model(torch.ones((1, 32, 224, 224, 3)))
->>> model.load_weights('model.weights.h5')
+model.load_weights('model.weights.h5')
 
->>> container = read_video('sample.mp4')
->>> frames = frame_sampling(container, num_frames=32)
->>> y_pred = model(frames)
->>> y_pred.shape
+container = read_video('sample.mp4')
+frames = frame_sampling(container, num_frames=32)
+y_pred = model(frames)
+y_pred.shape
 TensorShape([1, 400])
 
->>> probabilities = torch.nn.functional.softmax(y_pred).detach().numpy()
->>> probabilities = probabilities.squeeze(0)
->>> confidences = {
+probabilities = torch.nn.functional.softmax(y_pred).detach().numpy()
+probabilities = probabilities.squeeze(0)
+confidences = {
     label_map_inv[i]: float(probabilities[i]) \
     for i in np.argsort(probabilities)[::-1]
 }
->>> confidences
+confidences
 ```
 A classification results on a sample from [Kinetics-400](https://paperswithcode.com/dataset/kinetics-400-1).
 
@@ -89,10 +88,10 @@ model.load_weights('model.weights.h5', skip_mismatch=True)
 **Guides**
 
 - To ensure the keras reimplementation with official torch: [logit comparison](guides/video-swin-transformer-keras-and-torchvision.ipynb)
-- To train with tensorflow backend:
-- To trian with torch backend:
-- To train with jax backend:
-- To train with torch-lightening (torch backend):
+- To train with tensorflow backend: [code](guides/tf_videoswin_video_classification.ipynb)
+- To trian with torch backend: [code](guides/torch_videoswin_video_classification.ipynb)
+- To train with jax backend: [code](guides/jax_videoswin_video_classification.ipynb)
+- To train with torch-lightening (torch backend): [code](guides/torch_lightning_videoswin_video_classification.ipynb)
 
 
 ##  Citation
