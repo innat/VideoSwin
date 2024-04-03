@@ -11,7 +11,7 @@ setup(
     author="Mohammed Innat",
     author_email="innat.dev@gmail.com",
     url="https://github.com/innat/VideoSwin",
-    keywords=["deep learning", "image retrieval", "image recognition"],
+    keywords=["deep learning", "video retrieval", "video recognition"],
     install_requires=[
         "opencv-python>=4.1.2",
         "keras==3.0.5",

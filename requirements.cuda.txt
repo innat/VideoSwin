@@ -16,9 +16,6 @@ regex
 pandas
 tensorflow-datasets
 packaging
-flake8
-isort
-black
 pytest
 build
 namex
