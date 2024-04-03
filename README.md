@@ -97,20 +97,22 @@ model.load_weights('...weights.h5', skip_mismatch=True)
 ```
 
 
-**Guides**
+# Guides
 
-- To ensure the keras reimplementation with official torch: [logit comparison](guides/video-swin-transformer-keras-and-torchvision.ipynb)
-- To train with tensorflow backend:
-- To trian with torch backend:
-- To train with jax backend:
-- To train with torch-lightening (torch backend):
+1. [Comparison of Keras 3 implementaiton VS Official PyTorch implementaiton.](guides/logit_checking)
+2. [Full Evaluation on Kinetics 400 Test Set using PyTorch backend](guides/eval_benchmark/kerascv-kinetics-400-evaluation-in-pytorch.ipynb)
+3. [Fine tune with TensorFlow backend.](guides/fine_tune/tf_videoswin_video_classification.ipynb)
+4. [Fine tune with Jax backend](guides/fine_tune/jax_videoswin_video_classification.ipynb)
+5. [Fine tune with native PyTorch backend](guides/fine_tune/torch_videoswin_video_classification.ipynb)
+6. [Fine tune with PyTorch Lightening](guides/fine_tune/torch_lightning_videoswin_video_classification.ipynb)
+7. [Convert to ONNX Format](guides/inference_conversion/convert-video-swin-to-onnx.ipynb)
 
 
 ##  Citation
 
-If you use this videoswin implementation in your research, please cite it using the metadata from our `CITATION.cff` file.
+If you use this videoswin implementation in your research, please cite it using the metadata from our `CITATION.cff` file, along with the literature.
 
-```swift
+```bash
 @article{liu2021video,
   title={Video Swin Transformer},
   author={Liu, Ze and Ning, Jia and Cao, Yue and Wei, Yixuan and Zhang, Zheng and Lin, Stephen and Hu, Han},
