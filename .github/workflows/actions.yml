@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   video_swin:
-    name: Test Video Swin Transformer with Keras 3
+    name: PyTest Video Swin Transformer with Keras 3
     strategy:
       fail-fast: false
       matrix:
