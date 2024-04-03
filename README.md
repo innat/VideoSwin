@@ -80,6 +80,11 @@ backbone = VideoSwinT(
 )
 ```
 
+Or, we use use the `VideoSwinBackbone` API directly from `from videoswin.backbone`.
+
+
+**Arbitrary Input Shape**
+
 By default, the video swin officially is trained with input shape of `32, 224, 224, 3`. But, We can load the model with different shape. And also load the pretrained weight partially.
 
 ```python
@@ -88,8 +93,9 @@ model = VideoSwinT(
     include_rescaling=False,
     num_classes=10,
 )
-model.load_weights('model.weights.h5', skip_mismatch=True)
+model.load_weights('...weights.h5', skip_mismatch=True)
 ```
+
 
 **Guides**
 
