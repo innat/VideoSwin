@@ -28,35 +28,40 @@ The **VideoSwin** checkpoints are available in `.weights.h5` for Kinetrics 400/6
 
 # Inference
 
-A sample usage is shown below. We can pick any backend, i.e. tensorflow, torch or jax.
+A sample usage is shown below with a pretrained weight. We can pick any backend, i.e. tensorflow, torch or jax.
 
 ```python
->>> import  os
->>> import torch
->>> os.environ["KERAS_BACKEND"] = "torch"
->>> from videoswin import VideoSwinT
+import  os
+import torch
+os.environ["KERAS_BACKEND"] = "torch" # or any backend.
+from videoswin import VideoSwinT
 
->>> model = VideoSwinT(
-    num_classes=400,
-    include_rescaling=False,
-    activation=None
-)
->>> _ = model(torch.ones((1, 32, 224, 224, 3)))
->>> model.load_weights('model.weights.h5')
+def vswin_tiny():
+    !wget https://github.com/innat/VideoSwin/releases/download/v2.0/videoswin_tiny_kinetics400_classifier.weights.h5 -q
 
->>> container = read_video('sample.mp4')
->>> frames = frame_sampling(container, num_frames=32)
->>> y_pred = model(frames)
->>> y_pred.shape
-TensorShape([1, 400])
+    model = VideoSwinT(
+        num_classes=400,
+        include_rescaling=False,
+        activation=None
+    )
+    model.load_weights(
+        'videoswin_tiny_kinetics400_classifier.weights.h5'
+    )
+    return model
 
->>> probabilities = torch.nn.functional.softmax(y_pred).detach().numpy()
->>> probabilities = probabilities.squeeze(0)
->>> confidences = {
+model = vswin_tiny()
+container = read_video('sample.mp4')
+frames = frame_sampling(container, num_frames=32)
+y_pred = model(frames)
+y_pred.shape # [1, 400]
+
+probabilities = torch.nn.functional.softmax(y_pred).detach().numpy()
+probabilities = probabilities.squeeze(0)
+confidences = {
     label_map_inv[i]: float(probabilities[i]) \
     for i in np.argsort(probabilities)[::-1]
 }
->>> confidences
+confidences
 ```
 A classification results on a sample from [Kinetics-400](https://paperswithcode.com/dataset/kinetics-400-1).
 
