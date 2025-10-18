@@ -14,7 +14,6 @@ setup(
     keywords=["deep learning", "video retrieval", "video recognition"],
     install_requires=[
         "opencv-python>=4.1.2",
-        "keras==3.0.5",
         "tensorflow-datasets",
     ],
     extras_require={
