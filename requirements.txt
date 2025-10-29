@@ -1,5 +1,4 @@
 absl-py
 regex
 pandas
-numpy
 
