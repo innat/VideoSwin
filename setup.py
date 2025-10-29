@@ -14,6 +14,7 @@ setup(
     keywords=["deep learning", "video retrieval", "video recognition"],
     install_requires=[
         "opencv-python>=4.1.2",
+        "numpy<2.0",
     ],
     extras_require={
         "tests": [
