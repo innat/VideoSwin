@@ -1,8 +1,5 @@
 absl-py
 regex
 pandas
-tensorflow-datasets
-packaging
-pytest
-build
-namex
+numpy
+
